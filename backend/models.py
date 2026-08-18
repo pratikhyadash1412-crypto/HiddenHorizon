@@ -1,7 +1,9 @@
 
 
-from sqlalchemy import Column, Integer, String, Text, Float, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Float, Boolean
+from sqlalchemy.sql import func
 from database import Base
+
 
 
 # =========================
@@ -12,12 +14,26 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), nullable=False)
+    name = Column(String(150), nullable=False)
     email = Column(String(150), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
-    role = Column(String(30), nullable=False)
+    role = Column(String(50), nullable=False, default="PUBLIC")
+
+# =========================
+# REVIEWS
+# =========================
 
 
+
+class Review(Base):
+    __tablename__ = "reviews"
+
+    id = Column(Integer, primary_key=True, index=True)
+    destination_id = Column(Integer, nullable=False)
+    user_id = Column(Integer, nullable=False)
+    rating = Column(Integer, nullable=False)
+    feedback = Column(Text, nullable=False)
+    
 # =========================
 # DESTINATIONS
 # =========================
@@ -47,28 +63,6 @@ class Destination(Base):
     pollution_level = Column(Float, default=0)
 
 
-# =========================
-# REVIEWS
-# =========================
-
-class Review(Base):
-    __tablename__ = "reviews"
-
-    id = Column(Integer, primary_key=True, index=True)
-
-    destination_id = Column(
-        Integer,
-        ForeignKey("destinations.id")
-    )
-
-    user_id = Column(
-        Integer,
-        ForeignKey("users.id")
-    )
-
-    rating = Column(Integer)
-
-    feedback = Column(Text)
 
 
 # =========================
