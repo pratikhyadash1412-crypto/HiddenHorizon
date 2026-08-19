@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from fastapi import Form
 from reviews import router as reviews_router
-
+from ai import generate_ai_recommendation
 from database import engine, Base, get_db
 import models
 
@@ -422,14 +422,13 @@ def simulate_redistribution(
         )
 
     # ---------------------------------------------
-    # CURRENT FOOTFALL
+    # GET FOOTFALL RECORDS
     # ---------------------------------------------
 
     famous_footfall_records = (
         db.query(models.Footfall)
         .filter(
-            models.Footfall.destination_id ==
-            famous_destination_id
+            models.Footfall.destination_id == famous_destination_id
         )
         .all()
     )
@@ -437,21 +436,30 @@ def simulate_redistribution(
     hidden_footfall_records = (
         db.query(models.Footfall)
         .filter(
-            models.Footfall.destination_id ==
-            hidden_destination_id
+            models.Footfall.destination_id == hidden_destination_id
         )
         .all()
     )
 
-    famous_visitors = sum(
-        record.visitor_count or 0
-        for record in famous_footfall_records
-    )
+    # ---------------------------------------------
+    # CURRENT VISITORS
+    # ---------------------------------------------
 
-    hidden_visitors = sum(
-        record.visitor_count or 0
-        for record in hidden_footfall_records
-    )
+    if famous_footfall_records:
+        famous_visitors = sum(
+            record.visitor_count or 0
+            for record in famous_footfall_records
+        )
+    else:
+        famous_visitors = famous.current_footfall or 0
+
+    if hidden_footfall_records:
+        hidden_visitors = sum(
+            record.visitor_count or 0
+            for record in hidden_footfall_records
+        )
+    else:
+        hidden_visitors = hidden.current_footfall or 0
 
     # ---------------------------------------------
     # VISITOR SHIFT
@@ -515,10 +523,10 @@ def simulate_redistribution(
     # ACCESSIBILITY
     # ---------------------------------------------
 
-    accessibility_score = (
-        hidden.accessibility_score
-        if hasattr(hidden, "accessibility_score")
-        else 70
+    accessibility_score = getattr(
+        hidden,
+        "accessibility_score",
+        None
     )
 
     if accessibility_score is None:
@@ -530,90 +538,64 @@ def simulate_redistribution(
     )
 
     # ---------------------------------------------
-    # RECOMMENDATION
+    # AI RECOMMENDATION
     # ---------------------------------------------
 
-    if visitor_shift_percentage <= 10:
-
-        recommendation = (
-            f"A small redistribution of {visitor_shift_percentage}% "
-            f"of visitors from {famous.name} to {hidden.name} "
-            f"can be introduced with relatively low pressure on "
-            f"the hidden destination."
-        )
-
-    elif visitor_shift_percentage <= 30:
-
-        recommendation = (
-            f"A moderate redistribution of "
-            f"{visitor_shift_percentage}% of visitors from "
-            f"{famous.name} to {hidden.name} could reduce "
-            f"overcrowding while improving local tourism activity. "
-            f"Government monitoring of water, waste and accessibility "
-            f"should continue."
-        )
-
-    else:
-
-        recommendation = (
-            f"A redistribution of {visitor_shift_percentage}% "
-            f"may significantly increase pressure on {hidden.name}. "
-            f"Improve infrastructure, water availability, waste "
-            f"management and accessibility before implementing "
-            f"this level of redistribution."
-        )
+    ai_recommendation = generate_ai_recommendation(
+        famous.name,
+        hidden.name,
+        visitor_shift_percentage,
+        overcrowding_impact,
+        employment_impact,
+        local_purchase_impact,
+        government_profit_impact,
+        water_saving,
+        waste_impact,
+        pollution_impact,
+        accessibility_score
+    )
 
     # ---------------------------------------------
     # RETURN RESULT
     # ---------------------------------------------
 
     return {
+        # Destination names
         "famous_destination": famous.name,
         "hidden_destination": hidden.name,
 
+        # Original values
         "current_famous_visitors": famous_visitors,
         "current_hidden_visitors": hidden_visitors,
 
-        "visitor_shift_percentage":
-            visitor_shift_percentage,
+        # Frontend-friendly names
+        "original_visitors": famous_visitors,
+        "visitor_shift": shifted_visitors,
+        "new_visitors": new_hidden_visitors,
 
-        "shifted_visitors":
-            shifted_visitors,
+        # Shift
+        "visitor_shift_percentage": visitor_shift_percentage,
+        "shifted_visitors": shifted_visitors,
 
-        "new_famous_visitors":
-            new_famous_visitors,
+        # New visitor totals
+        "new_famous_visitors": new_famous_visitors,
+        "new_hidden_visitors": new_hidden_visitors,
 
-        "new_hidden_visitors":
-            new_hidden_visitors,
+        # Impact metrics
+        "overcrowding_impact": overcrowding_impact,
+        "employment_impact": employment_impact,
+        "local_purchase_impact": local_purchase_impact,
+        "government_profit_impact": government_profit_impact,
+        "water_saving": water_saving,
+        "waste_impact": waste_impact,
+        "pollution_impact": pollution_impact,
 
-        "overcrowding_impact":
-            overcrowding_impact,
+        # Accessibility
+        "accessibility_score": accessibility_score,
 
-        "employment_impact":
-            employment_impact,
-
-        "local_purchase_impact":
-            local_purchase_impact,
-
-        "government_profit_impact":
-            government_profit_impact,
-
-        "water_saving":
-            water_saving,
-
-        "waste_impact":
-            waste_impact,
-
-        "pollution_impact":
-            pollution_impact,
-
-        "accessibility_score":
-            accessibility_score,
-
-        "ai_recommendation":
-            recommendation
+        # AI Recommendation
+        "ai_recommendation": ai_recommendation
     }
-
 @app.get("/government/destination-scores")
 def get_destination_scores(
     db: Session = Depends(get_db)
