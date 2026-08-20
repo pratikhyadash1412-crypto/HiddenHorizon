@@ -105,7 +105,7 @@ function Home() {
       <nav className="navbar home-navbar">
         <div className="logo home-logo">
           <MapPin size={28} />
-          <span>Tourism</span>
+          <span>Hidden Horizon</span>
         </div>
 
         <div className="nav-links">
@@ -300,7 +300,7 @@ function Home() {
           <div className="footer-brand">
             <div className="footer-logo">
               <MapPin size={26} />
-              <span>Tourism</span>
+              <span>Hidden Horizon</span>
             </div>
 
             <p>
@@ -342,7 +342,7 @@ function Home() {
 
         <div className="footer-bottom">
           <p>
-            ©️ 2026 Tourism Initiative
+            ©️ 2026 Hidden Horizon. All rights reserved.
           </p>
 
           <span>
@@ -605,7 +605,7 @@ function GovernmentLogin() {
         </h1>
 
         <p>
-          Access the S21 tourism management dashboard.
+          Access the Hidden Horizon management dashboard.
         </p>
 
         <input

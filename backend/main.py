@@ -9,6 +9,16 @@ from ai import generate_ai_recommendation
 from database import engine, Base, get_db
 import models
 
+# ---------------------------------------------------------
+# LATEST REDISTRIBUTION SCENARIO
+# ---------------------------------------------------------
+
+latest_redistribution = {
+    "famous_destination_id": None,
+    "hidden_destination_id": None,
+    "visitor_shift_percentage": 0,
+}
+
 app = FastAPI(title="S21 Tourism API")
 
 app.add_middleware(
@@ -554,6 +564,42 @@ def simulate_redistribution(
         pollution_impact,
         accessibility_score
     )
+        # ---------------------------------------------
+    # SAVE AI ANALYSIS
+    # ---------------------------------------------
+
+    analysis = models.AIAnalysis(
+        famous_destination_id=famous_destination_id,
+        hidden_destination_id=hidden_destination_id,
+
+        visitor_shift_percentage=visitor_shift_percentage,
+
+        overcrowding_impact=overcrowding_impact,
+        employment_impact=employment_impact,
+        local_purchase_impact=local_purchase_impact,
+        government_profit_impact=government_profit_impact,
+
+        water_saving=water_saving,
+        waste_impact=waste_impact,
+        pollution_impact=pollution_impact,
+
+        accessibility_score=accessibility_score,
+
+        ai_recommendation=ai_recommendation
+    )
+
+    db.add(analysis)
+    db.commit()
+    db.refresh(analysis)
+
+    
+
+    latest_redistribution["famous_destination_id"] = famous_destination_id
+    latest_redistribution["hidden_destination_id"] = hidden_destination_id
+    latest_redistribution["visitor_shift_percentage"] = visitor_shift_percentage
+
+
+
 
     # ---------------------------------------------
     # RETURN RESULT
@@ -609,9 +655,82 @@ def get_destination_scores(
     if not destinations:
         return []
 
-    # Find maximum values for normalization
+    # ---------------------------------------------------------
+    # LATEST SIMULATION
+    # ---------------------------------------------------------
+
+    source_id = latest_redistribution.get(
+        "famous_destination_id"
+    )
+
+    hidden_id = latest_redistribution.get(
+        "hidden_destination_id"
+    )
+
+    shift_percentage = latest_redistribution.get(
+        "visitor_shift_percentage",
+        0
+    )
+
+    shift_fraction = shift_percentage / 100
+
+    # ---------------------------------------------------------
+    # CALCULATE SIMULATED FOOTFALL
+    # ---------------------------------------------------------
+
+    simulated_footfall = {}
+
+    for destination in destinations:
+
+        footfall = destination.current_footfall or 0
+
+        # Source loses tourists
+        if destination.id == source_id:
+
+            shifted_visitors = footfall * shift_fraction
+
+            simulated_footfall[destination.id] = max(
+                0,
+                footfall - shifted_visitors
+            )
+
+        # Hidden destination receives tourists
+        elif destination.id == hidden_id and source_id:
+
+            source_destination = next(
+                (
+                    d for d in destinations
+                    if d.id == source_id
+                ),
+                None
+            )
+
+            if source_destination:
+
+                source_footfall = (
+                    source_destination.current_footfall or 0
+                )
+
+                shifted_visitors = (
+                    source_footfall * shift_fraction
+                )
+
+                simulated_footfall[destination.id] = (
+                    footfall + shifted_visitors
+                )
+
+            else:
+                simulated_footfall[destination.id] = footfall
+
+        else:
+            simulated_footfall[destination.id] = footfall
+
+    # ---------------------------------------------------------
+    # NORMALIZATION
+    # ---------------------------------------------------------
+
     max_footfall = max(
-        [d.current_footfall or 0 for d in destinations],
+        simulated_footfall.values(),
         default=1
     )
 
@@ -632,11 +751,19 @@ def get_destination_scores(
 
     results = []
 
+    # ---------------------------------------------------------
+    # BUILD RESULTS
+    # ---------------------------------------------------------
+
     for destination in destinations:
 
+        footfall = simulated_footfall.get(
+            destination.id,
+            destination.current_footfall or 0
+        )
+
         footfall_score = (
-            (destination.current_footfall or 0)
-            / max_footfall
+            footfall / max_footfall
         ) * 100
 
         water_score = (
@@ -654,7 +781,6 @@ def get_destination_scores(
             / max_pollution
         ) * 100
 
-        # Overall pressure score
         vulnerability_score = round(
             (
                 footfall_score * 0.40
@@ -665,7 +791,6 @@ def get_destination_scores(
             2
         )
 
-        # Higher score = more tourism pressure
         if vulnerability_score >= 75:
             category = "HIGH PRESSURE"
 
@@ -681,8 +806,9 @@ def get_destination_scores(
             "state": destination.state,
             "district": destination.district,
 
-            "current_footfall":
-                destination.current_footfall or 0,
+            # IMPORTANT:
+            # Return simulated value, not database value
+            "current_footfall": round(footfall),
 
             "water_usage":
                 destination.water_usage or 0,
@@ -712,14 +838,259 @@ def get_destination_scores(
                 category
         })
 
-    # Highest pressure first
     results.sort(
         key=lambda x: x["vulnerability_score"],
         reverse=True
     )
 
     return results
+@app.get("/government/recommended-destination")
+def recommended_destination(
+    db: Session = Depends(get_db)
+):
+    destinations = (
+        db.query(models.Destination)
+        .filter(
+            models.Destination.approved == True
+        )
+        .all()
+    )
 
+    if not destinations:
+        raise HTTPException(
+            status_code=404,
+            detail="No approved destinations available."
+        )
+
+    # ---------------------------------------------------------
+    # LATEST SIMULATION
+    # ---------------------------------------------------------
+
+    source_id = latest_redistribution.get(
+        "famous_destination_id"
+    )
+
+    hidden_id = latest_redistribution.get(
+        "hidden_destination_id"
+    )
+
+    shift_percentage = latest_redistribution.get(
+        "visitor_shift_percentage",
+        0
+    )
+
+    # ---------------------------------------------------------
+    # IF SIMULATION EXISTS, USE ITS DESTINATIONS
+    # ---------------------------------------------------------
+
+    if source_id and hidden_id:
+
+        famous = next(
+            (
+                d for d in destinations
+                if d.id == source_id
+            ),
+            None
+        )
+
+        simulated_hidden = next(
+            (
+                d for d in destinations
+                if d.id == hidden_id
+            ),
+            None
+        )
+
+        if famous and simulated_hidden:
+
+            famous_footfall = (
+                famous.current_footfall or 0
+            )
+
+            hidden_footfall = (
+                simulated_hidden.current_footfall or 0
+            )
+
+            shifted_visitors = (
+                famous_footfall
+                * (shift_percentage / 100)
+            )
+
+            new_famous_footfall = max(
+                0,
+                famous_footfall - shifted_visitors
+            )
+
+            new_hidden_footfall = (
+                hidden_footfall + shifted_visitors
+            )
+
+            # -------------------------------------------------
+            # RECOMMENDATION SCORE
+            # -------------------------------------------------
+
+            footfall_ratio = (
+                new_hidden_footfall
+                / max(famous_footfall, 1)
+            )
+
+            water_ratio = (
+                (simulated_hidden.water_usage or 0)
+                / max(famous.water_usage or 1, 1)
+            )
+
+            waste_ratio = (
+                (simulated_hidden.waste_generation or 0)
+                / max(famous.waste_generation or 1, 1)
+            )
+
+            pollution_ratio = (
+                (simulated_hidden.pollution_level or 0)
+                / max(famous.pollution_level or 1, 1)
+            )
+
+            pressure_score = (
+                footfall_ratio * 40
+                + water_ratio * 20
+                + waste_ratio * 20
+                + pollution_ratio * 20
+            )
+
+            score = round(
+                max(0, 100 - pressure_score),
+                2
+            )
+
+            return {
+                "source_destination":
+                    famous.name,
+
+                "recommended_destination":
+                    simulated_hidden.name,
+
+                "source_destination_id":
+                    famous.id,
+
+                "recommended_destination_id":
+                    simulated_hidden.id,
+
+                "source_footfall":
+                    round(new_famous_footfall),
+
+                "recommended_footfall":
+                    round(new_hidden_footfall),
+
+                "recommendation_score":
+                    score,
+
+                "reason": (
+                    f"{simulated_hidden.name} has lower tourism "
+                    f"pressure than {famous.name} and has greater "
+                    f"capacity to receive redistributed tourists."
+                )
+            }
+
+    # ---------------------------------------------------------
+    # FALLBACK — NO SIMULATION YET
+    # ---------------------------------------------------------
+
+    famous = max(
+        destinations,
+        key=lambda destination:
+        destination.current_footfall or 0
+    )
+
+    famous_footfall = (
+        famous.current_footfall or 0
+    )
+
+    if famous_footfall <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="No destination has current visitor data."
+        )
+
+    candidates = [
+        destination
+        for destination in destinations
+        if destination.id != famous.id
+        and (
+            destination.current_footfall or 0
+        ) < famous_footfall * 0.30
+    ]
+
+    if not candidates:
+        raise HTTPException(
+            status_code=404,
+            detail="No suitable hidden destination found."
+        )
+
+    def recommendation_score(destination):
+
+        footfall = destination.current_footfall or 0
+        water = destination.water_usage or 0
+        waste = destination.waste_generation or 0
+        pollution = destination.pollution_level or 0
+
+        pressure_score = (
+            (footfall / famous_footfall) * 40
+            + (
+                water /
+                max(famous.water_usage or 1, 1)
+            ) * 20
+            + (
+                waste /
+                max(famous.waste_generation or 1, 1)
+            ) * 20
+            + (
+                pollution /
+                max(famous.pollution_level or 1, 1)
+            ) * 20
+        )
+
+        return max(
+            0,
+            100 - pressure_score
+        )
+
+    recommended = max(
+        candidates,
+        key=recommendation_score
+    )
+
+    score = round(
+        recommendation_score(recommended),
+        2
+    )
+
+    return {
+        "source_destination":
+            famous.name,
+
+        "recommended_destination":
+            recommended.name,
+
+        "source_destination_id":
+            famous.id,
+
+        "recommended_destination_id":
+            recommended.id,
+
+        "source_footfall":
+            famous_footfall,
+
+        "recommended_footfall":
+            recommended.current_footfall or 0,
+
+        "recommendation_score":
+            score,
+
+        "reason": (
+            f"{recommended.name} has lower tourism pressure "
+            f"than {famous.name} and has greater capacity "
+            f"to receive redistributed tourists."
+        )
+    }
 # =========================
 # GET NEARBY STAYS
 # =========================

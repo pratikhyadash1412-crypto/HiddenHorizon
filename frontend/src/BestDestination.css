@@ -1,0 +1,190 @@
+.best-destination-section {
+  width: min(1200px, 92%);
+  margin: 80px auto;
+}
+
+.best-destination-heading {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.best-destination-heading h2 {
+  font-size: 42px;
+  margin: 18px 0 12px;
+}
+
+.best-destination-heading p {
+  max-width: 700px;
+  margin: auto;
+  line-height: 1.7;
+  opacity: 0.8;
+}
+
+.recommendation-card {
+  padding: 35px;
+
+  border-radius: 28px;
+
+  background: rgba(20, 60, 45, 0.65);
+
+  border: 1px solid rgba(120, 255, 180, 0.25);
+
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.recommendation-route {
+  display: grid;
+
+  grid-template-columns: 1fr 80px 1fr;
+
+  align-items: center;
+
+  gap: 25px;
+}
+
+.recommendation-place {
+  padding: 28px;
+
+  border-radius: 20px;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.recommendation-place span {
+  display: block;
+
+  font-size: 11px;
+
+  letter-spacing: 1.6px;
+
+  font-weight: 800;
+
+  margin-bottom: 12px;
+
+  opacity: 0.8;
+}
+
+.recommendation-place h3 {
+  font-size: 27px;
+
+  margin: 0 0 18px;
+}
+
+.recommendation-place strong {
+  display: block;
+
+  font-size: 25px;
+}
+
+.recommendation-place small {
+  opacity: 0.7;
+}
+
+.recommendation-place.recommended {
+  border-color: rgba(120, 255, 180, 0.5);
+}
+
+.recommendation-place.recommended span {
+  color: #83ffbd;
+}
+
+.recommendation-arrow {
+  text-align: center;
+
+  font-size: 45px;
+
+  color: #83ffbd;
+}
+
+.recommendation-score {
+  margin: 30px auto;
+
+  text-align: center;
+
+  padding: 22px;
+
+  border-radius: 18px;
+
+  background: rgba(120, 255, 180, 0.08);
+}
+
+.recommendation-score span {
+  display: block;
+
+  font-size: 11px;
+
+  letter-spacing: 1.5px;
+
+  font-weight: 800;
+}
+
+.recommendation-score strong {
+  font-size: 48px;
+
+  color: #83ffbd;
+}
+
+.recommendation-score small {
+  font-size: 15px;
+
+  opacity: 0.7;
+}
+
+.recommendation-reason {
+  display: flex;
+
+  gap: 15px;
+
+  padding: 22px;
+
+  border-radius: 18px;
+
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.recommendation-reason > span {
+  font-size: 25px;
+}
+
+.recommendation-reason strong {
+  display: block;
+
+  margin-bottom: 8px;
+}
+
+.recommendation-reason p {
+  margin: 0;
+
+  line-height: 1.7;
+
+  opacity: 0.85;
+}
+
+.best-destination-status,
+.best-destination-error {
+  text-align: center;
+
+  padding: 25px;
+}
+
+.best-destination-error {
+  color: #ff9a9a;
+}
+
+@media (max-width: 700px) {
+
+  .recommendation-route {
+    grid-template-columns: 1fr;
+  }
+
+  .recommendation-arrow {
+    transform: rotate(90deg);
+  }
+
+  .best-destination-heading h2 {
+    font-size: 32px;
+  }
+
+}

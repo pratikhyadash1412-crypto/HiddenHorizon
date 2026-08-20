@@ -2,10 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShieldCheck, BarChart3 } from "lucide-react";
 import "./GovernmentDashboard.css";
-
+import AIAnalysis from "./AIAnalysis";
+import DestinationRecommendations from "./DestinationRecommendations";
+import BestDestination from "./BestDestination";
 const API_URL = "http://127.0.0.1:8000";
 
 function GovernmentDashboard() {
+  const [recommendedRoute, setRecommendedRoute] = useState(null);
   const navigate = useNavigate();
 
   const [submissions, setSubmissions] = useState([]);
@@ -27,6 +30,58 @@ function GovernmentDashboard() {
   const [simulation, setSimulation] = useState(null);
   const [simulationLoading, setSimulationLoading] = useState(false);
   const [simulationError, setSimulationError] = useState("");
+  const [simulationTime, setSimulationTime] = useState(null);
+  const [aiRefreshKey, setAiRefreshKey] = useState(0);
+  const handleRecommendationSelect = (route) => {
+    setRecommendedRoute(route);
+
+    if (!route) {
+      return;
+    }
+
+    // Prefer IDs if BestDestination provides them
+    if (route.famous_destination_id !== undefined) {
+      setFamousDestinationId(String(route.famous_destination_id));
+    }
+
+    if (route.hidden_destination_id !== undefined) {
+      setHiddenDestinationId(String(route.hidden_destination_id));
+    }
+
+    // If only names are provided, find their IDs from destinationScores
+    if (
+      route.famous_destination &&
+      route.famous_destination_id === undefined
+    ) {
+      const famous = destinationScores.find(
+        (destination) =>
+          destination.name === route.famous_destination
+      );
+
+      if (famous) {
+        setFamousDestinationId(String(famous.id));
+      }
+    }
+
+    if (
+      route.hidden_destination &&
+      route.hidden_destination_id === undefined
+    ) {
+      const hidden = destinationScores.find(
+        (destination) =>
+          destination.name === route.hidden_destination
+      );
+
+      if (hidden) {
+        setHiddenDestinationId(String(hidden.id));
+      }
+    }
+
+    // Clear previous simulation so the government
+    // knows this is a new recommendation
+    setSimulation(null);
+    setSimulationError("");
+  };
 
   const logout = () => {
     localStorage.removeItem("user_id");
@@ -118,6 +173,8 @@ function GovernmentDashboard() {
         throw new Error(data.detail || "Simulation failed.");
       }
       setSimulation(data);
+      setSimulationTime(new Date());
+      setAiRefreshKey((prev) => prev + 1);
     } catch (err) {
       console.error(err);
       setSimulationError(err.message || "Unable to run simulation.");
@@ -198,7 +255,7 @@ function GovernmentDashboard() {
       <nav className="navbar government-navbar">
         <div className="logo">
           <ShieldCheck size={28} />
-          <span>S21 Government</span>
+          <span>Hidden Horizon</span>
         </div>
         <button className="logout" onClick={logout}>
           Logout
@@ -296,28 +353,28 @@ function GovernmentDashboard() {
 
                   {(submission.verification_status === "PENDING" ||
                     !submission.verification_status) && (
-                    <div className="government-actions">
-                      <button
-                        className="approve-button"
-                        disabled={actionLoading !== null}
-                        onClick={() => handlePlaceAction(submission.id, "approve")}
-                      >
-                        {actionLoading === `place-${submission.id}-approve`
-                          ? "Approving..."
-                          : "✓ Approve"}
-                      </button>
+                      <div className="government-actions">
+                        <button
+                          className="approve-button"
+                          disabled={actionLoading !== null}
+                          onClick={() => handlePlaceAction(submission.id, "approve")}
+                        >
+                          {actionLoading === `place-${submission.id}-approve`
+                            ? "Approving..."
+                            : "✓ Approve"}
+                        </button>
 
-                      <button
-                        className="reject-button"
-                        disabled={actionLoading !== null}
-                        onClick={() => handlePlaceAction(submission.id, "reject")}
-                      >
-                        {actionLoading === `place-${submission.id}-reject`
-                          ? "Rejecting..."
-                          : "✕ Reject"}
-                      </button>
-                    </div>
-                  )}
+                        <button
+                          className="reject-button"
+                          disabled={actionLoading !== null}
+                          onClick={() => handlePlaceAction(submission.id, "reject")}
+                        >
+                          {actionLoading === `place-${submission.id}-reject`
+                            ? "Rejecting..."
+                            : "✕ Reject"}
+                        </button>
+                      </div>
+                    )}
                 </div>
               ))}
             </div>
@@ -357,28 +414,28 @@ function GovernmentDashboard() {
 
                   {(guide.verification_status === "PENDING" ||
                     !guide.verification_status) && (
-                    <div className="government-actions">
-                      <button
-                        className="approve-button"
-                        disabled={actionLoading !== null}
-                        onClick={() => handleGuideAction(guide.id, "approve")}
-                      >
-                        {actionLoading === `guide-${guide.id}-approve`
-                          ? "Approving..."
-                          : "✓ Approve"}
-                      </button>
+                      <div className="government-actions">
+                        <button
+                          className="approve-button"
+                          disabled={actionLoading !== null}
+                          onClick={() => handleGuideAction(guide.id, "approve")}
+                        >
+                          {actionLoading === `guide-${guide.id}-approve`
+                            ? "Approving..."
+                            : "✓ Approve"}
+                        </button>
 
-                      <button
-                        className="reject-button"
-                        disabled={actionLoading !== null}
-                        onClick={() => handleGuideAction(guide.id, "reject")}
-                      >
-                        {actionLoading === `guide-${guide.id}-reject`
-                          ? "Rejecting..."
-                          : "✕ Reject"}
-                      </button>
-                    </div>
-                  )}
+                        <button
+                          className="reject-button"
+                          disabled={actionLoading !== null}
+                          onClick={() => handleGuideAction(guide.id, "reject")}
+                        >
+                          {actionLoading === `guide-${guide.id}-reject`
+                            ? "Rejecting..."
+                            : "✕ Reject"}
+                        </button>
+                      </div>
+                    )}
                 </div>
               ))}
             </div>
@@ -424,7 +481,7 @@ function GovernmentDashboard() {
                 </div>
 
                 {!analytics?.monthly_footfall ||
-                analytics.monthly_footfall.length === 0 ? (
+                  analytics.monthly_footfall.length === 0 ? (
                   <div className="chart-empty">No footfall data available yet.</div>
                 ) : (
                   <div className="footfall-chart">
@@ -490,7 +547,8 @@ function GovernmentDashboard() {
                     <div>
                       <span>{destination.category}</span>
                       <h3>{destination.name}</h3>
-                      <p>📍 {destination.district}, {destination.state}</p>
+                      <p className="destination-location">
+                        📍 {destination.district}, {destination.state}</p>
                     </div>
 
                     <div className="score-circle">
@@ -674,21 +732,60 @@ function GovernmentDashboard() {
                   </h3>
                 </div>
 
+
+                {/* LAST SIMULATION */}
+
+                <div className="simulation-updated">
+
+                  <div>
+                    <span>LAST SIMULATION</span>
+
+                    <strong>
+                      {simulationTime
+                        ? simulationTime.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                        : "--"}
+                    </strong>
+                  </div>
+
+
+                  <div>
+                    <span>REDISTRIBUTION</span>
+
+                    <strong>
+                      {simulation.shifted_visitors
+                        ? `${(
+                          (simulation.shifted_visitors /
+                            simulation.current_famous_visitors) *
+                          100
+                        ).toFixed(0)}%`
+                        : "0%"}
+                    </strong>
+                  </div>
+
+                </div>
+
                 <div className="visitor-change-grid">
                   <div className="visitor-box">
                     <span>Original Visitors</span>
-                    <strong>{simulation.current_famous_visitors}</strong>
+                    <strong>{simulation.current_famous_visitors?.toLocaleString()}</strong>
                   </div>
 
                   <div className="visitor-box shift-box">
                     <span>Visitor Shift</span>
-                    <strong>+{simulation.shifted_visitors}</strong>
+                    <strong>+{simulation.shifted_visitors?.toLocaleString()}</strong>
                   </div>
 
                   <div className="visitor-box">
                     <span>New Visitors</span>
-                    <strong>{simulation.new_hidden_visitors}</strong>
+                    <strong>{simulation.new_hidden_visitors?.toLocaleString()}</strong>
                   </div>
+                </div>
+                <div className="ai-recommendation-box">
+                  <h3>AI Recommendation</h3>
+                  <p>{simulation.ai_recommendation}</p>
                 </div>
 
                 {simulation.sustainability_impact && (
@@ -700,7 +797,20 @@ function GovernmentDashboard() {
               </div>
             )}
           </div>
+
+
         </section>
+        <AIAnalysis refreshKey={aiRefreshKey} />
+
+        <DestinationRecommendations
+          refreshKey={aiRefreshKey}
+        />
+
+        <BestDestination
+          refreshKey={aiRefreshKey}
+        />
+
+
       </main>
     </div>
   );
