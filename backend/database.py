@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 DATABASE_URL = URL.create(
     "mysql+pymysql",
     username="root",
-    password="Anuj@2007",
+    password="SIH@2026",
     host="localhost",
     port=3306,
     database="tourism"

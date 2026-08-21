@@ -742,7 +742,7 @@ function PublicDashboard() {
         <div className="logo explore-logo">
           <MapPin size={28} />
           <span>
-            S21 Tourism
+            Hidden Horizon
           </span>
         </div>
 
@@ -1039,7 +1039,7 @@ function DestinationDetails() {
         <div className="logo white-logo">
           <MapPin size={28} />
           <span>
-            S21 Tourism
+            Hidden Horizon
           </span>
         </div>
       </nav>

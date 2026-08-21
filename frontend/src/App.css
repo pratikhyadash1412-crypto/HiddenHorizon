@@ -39,16 +39,20 @@ a {
 ===================================================== */
 .home-page {
   position: relative;
-  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
   background-size: cover;
-  background-position: center;
+  background-position: center top;
   background-attachment: fixed;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 .home-overlay {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100dvh;
   background: linear-gradient(
     135deg,
     rgba(3, 27, 16, 0.84) 0%,
@@ -56,6 +60,7 @@ a {
     rgba(2, 20, 11, 0.88) 100%
   );
   z-index: 0;
+  pointer-events: none;
 }
 
 /* =====================================================
@@ -115,10 +120,10 @@ a {
 .home-content {
   position: relative;
   z-index: 2;
-  width: min(1150px, 90%);
-  min-height: calc(100vh - 72px);
+  width: min(1150px, calc(100% - 40px));
+  min-height: calc(100dvh - 72px);
   margin: 0 auto;
-  padding: 90px 0;
+  padding: clamp(45px, 7vh, 90px) 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -455,9 +460,13 @@ a {
    FOOTER
 ===================================================== */
 .footer {
+  position: relative;
+  z-index: 3;
   padding: 65px 7% 25px;
-  background: linear-gradient(135deg, #030a06, #06130b);
-  color: #f8fafc;
+  background: linear-gradient(135deg, #123d27 0%, #0d3020 50%, #092519 100%);
+  color: #ffffff;
+  border-top: 1px solid rgba(134, 239, 172, 0.25);
+  box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.18);
 }
 
 .footer-container {
@@ -483,7 +492,7 @@ a {
 
 .footer-brand p {
   max-width: 350px;
-  color: #e2e8f0;
+  color: #f1f5f9;
   font-size: 13.5px;
   line-height: 1.8;
 }
@@ -503,7 +512,7 @@ a {
 }
 
 .footer-links a {
-  color: #e2e8f0;
+  color: #f1f5f9;
   font-size: 13.5px;
   transition: color 0.2s ease;
 }
@@ -523,7 +532,7 @@ a {
   display: flex;
   align-items: center;
   gap: 9px;
-  color: #e2e8f0;
+  color: #f1f5f9;
   font-size: 13.5px;
 }
 
@@ -1280,6 +1289,28 @@ a {
 }
 
 /* =====================================================
+   HOME PAGE LAYER FIX
+===================================================== */
+.home-page > .home-overlay {
+  height: 100dvh;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.home-page > .navbar,
+.home-page > .home-content {
+  position: relative;
+  z-index: 2;
+}
+
+.home-page > .about-section,
+.home-page > .mission-section,
+.home-page > .footer {
+  position: relative;
+  z-index: 3;
+}
+
+/* =====================================================
    RESPONSIVE
 ===================================================== */
 @media (max-width: 1000px) {
@@ -1335,11 +1366,13 @@ a {
   }
 
   .home-content {
-    padding: 70px 0;
+    width: calc(100% - 30px);
+    min-height: calc(100dvh - 64px);
+    padding: 45px 0;
   }
 
   .hero-title {
-    font-size: 46px;
+    font-size: clamp(40px, 11vw, 52px);
     letter-spacing: -1.5px;
   }
 
