@@ -1,9 +1,6 @@
-
-
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Float, Boolean
 from sqlalchemy.sql import func
 from database import Base
-
 
 
 # =========================
@@ -19,11 +16,10 @@ class User(Base):
     password = Column(String(255), nullable=False)
     role = Column(String(50), nullable=False, default="PUBLIC")
 
+
 # =========================
 # REVIEWS
 # =========================
-
-
 
 class Review(Base):
     __tablename__ = "reviews"
@@ -33,7 +29,8 @@ class Review(Base):
     user_id = Column(Integer, nullable=False)
     rating = Column(Integer, nullable=False)
     feedback = Column(Text, nullable=False)
-    
+
+
 # =========================
 # DESTINATIONS
 # =========================
@@ -51,6 +48,9 @@ class Destination(Base):
     latitude = Column(Float)
     longitude = Column(Float)
 
+    # Custom background image for public dashboard
+    image_url = Column(String(500), nullable=True)
+
     destination_type = Column(String(30), nullable=False)
 
     # Government approval
@@ -61,8 +61,6 @@ class Destination(Base):
     water_usage = Column(Float, default=0)
     waste_generation = Column(Float, default=0)
     pollution_level = Column(Float, default=0)
-
-
 
 
 # =========================
@@ -80,7 +78,6 @@ class Guide(Base):
     )
 
     experience = Column(String(100))
-
     phone = Column(String(20))
 
     verification_status = Column(
@@ -136,11 +133,8 @@ class Stay(Base):
     )
 
     name = Column(String(150), nullable=False)
-
     address = Column(String(255))
-
     price_per_night = Column(Float)
-
     contact = Column(String(30))
 
 
@@ -159,7 +153,6 @@ class Footfall(Base):
     )
 
     month = Column(String(20))
-
     visitor_count = Column(Integer)
 
 
@@ -178,16 +171,15 @@ class PlaceSubmission(Base):
     )
 
     name = Column(String(150), nullable=False)
-
     state = Column(String(100), nullable=False)
-
     district = Column(String(100))
-
     description = Column(Text)
 
     latitude = Column(Float)
-
     longitude = Column(Float)
+
+    # Stores user-submitted background image URL
+    image_url = Column(String(500), nullable=True)
 
     verification_status = Column(
         String(30),
@@ -217,19 +209,13 @@ class AIAnalysis(Base):
     visitor_shift_percentage = Column(Float)
 
     overcrowding_impact = Column(Float)
-
     employment_impact = Column(Float)
-
     local_purchase_impact = Column(Float)
-
     government_profit_impact = Column(Float)
 
     water_saving = Column(Float)
-
     waste_impact = Column(Float)
-
     pollution_impact = Column(Float)
 
     accessibility_score = Column(Float)
-
     ai_recommendation = Column(Text)
