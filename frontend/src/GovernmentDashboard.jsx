@@ -279,7 +279,7 @@ function GovernmentDashboard() {
         {/* OVERVIEW STATS */}
         <section className="government-stats">
           <div className="government-stat-card">
-            <span className="stat-label">Hidden Destinations</span>
+            <span className="stat-label">Total Destinations</span>
             <strong>
               {analyticsLoading ? "..." : analytics?.total_destinations ?? 0}
             </strong>
@@ -644,16 +644,24 @@ function GovernmentDashboard() {
             <div className="simulation-controls">
               <div className="simulation-field">
                 <label>From: Overcrowded Destination</label>
+
                 <select
                   value={famousDestinationId}
                   onChange={(e) => setFamousDestinationId(e.target.value)}
                 >
                   <option value="">Select destination</option>
-                  {destinationScores.map((destination) => (
-                    <option key={destination.id} value={destination.id}>
-                      {destination.name} ({destination.category})
-                    </option>
-                  ))}
+
+                  {destinationScores
+                    .filter(
+                      (destination) =>
+                        destination.category === "HIGH PRESSURE" ||
+                        destination.category === "MODERATE PRESSURE"
+                    )
+                    .map((destination) => (
+                      <option key={destination.id} value={destination.id}>
+                        {destination.name} ({destination.category})
+                      </option>
+                    ))}
                 </select>
               </div>
 
@@ -661,18 +669,27 @@ function GovernmentDashboard() {
 
               <div className="simulation-field">
                 <label>To: Hidden Destination</label>
+
                 <select
                   value={hiddenDestinationId}
                   onChange={(e) => setHiddenDestinationId(e.target.value)}
                 >
                   <option value="">Select destination</option>
-                  {destinationScores.map((destination) => (
-                    <option key={destination.id} value={destination.id}>
-                      {destination.name} ({destination.category})
-                    </option>
-                  ))}
+
+                  {destinationScores
+                    .filter(
+                      (destination) =>
+                        destination.id !== Number(famousDestinationId) &&
+                        destination.category === "LOW PRESSURE"
+                    )
+                    .map((destination) => (
+                      <option key={destination.id} value={destination.id}>
+                        {destination.name} ({destination.category})
+                      </option>
+                    ))}
                 </select>
               </div>
+
             </div>
 
             <div className="shift-control">
@@ -784,9 +801,33 @@ function GovernmentDashboard() {
                   </div>
                 </div>
                 <div className="ai-recommendation-box">
-                  <h3>AI Recommendation</h3>
-                  <p>{simulation.ai_recommendation}</p>
+                  <div className="ai-recommendation-header">
+                    <h3>AI Recommendation</h3>
+
+                    <span
+                      className={`ai-decision-badge ${simulation.ai_recommendation?.startsWith("RECOMMENDED")
+                          ? "recommended"
+                          : simulation.ai_recommendation?.startsWith("CAUTION")
+                            ? "caution"
+                            : "not-recommended"
+                        }`}
+                    >
+                      {simulation.ai_recommendation?.startsWith("RECOMMENDED")
+                        ? "RECOMMENDED"
+                        : simulation.ai_recommendation?.startsWith("CAUTION")
+                          ? "CAUTION"
+                          : "NOT RECOMMENDED"}
+                    </span>
+                  </div>
+
+                  <p>
+                    {simulation.ai_recommendation
+                      ?.replace(/^RECOMMENDED:\s*/, "")
+                      .replace(/^CAUTION:\s*/, "")
+                      .replace(/^NOT RECOMMENDED:\s*/, "")}
+                  </p>
                 </div>
+
 
                 {simulation.sustainability_impact && (
                   <div className="simulation-impact-note">

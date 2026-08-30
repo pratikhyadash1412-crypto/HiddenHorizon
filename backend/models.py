@@ -50,6 +50,7 @@ class Destination(Base):
 
     # Custom background image for public dashboard
     image_url = Column(String(500), nullable=True)
+    video_url = Column(String(500), nullable=True)
 
     destination_type = Column(String(30), nullable=False)
 
@@ -180,7 +181,7 @@ class PlaceSubmission(Base):
 
     # Stores user-submitted background image URL
     image_url = Column(String(500), nullable=True)
-
+    video_url = Column(String(500), nullable=True)
     verification_status = Column(
         String(30),
         default="PENDING"

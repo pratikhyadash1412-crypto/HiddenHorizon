@@ -11,76 +11,154 @@ def generate_ai_recommendation(
     pollution_impact,
     accessibility_score,
 ):
-    recommendations = []
+    # -----------------------------------------
+    # Calculate recommendation level
+    # -----------------------------------------
 
-    # Overcrowding
+    score = 0
+
     if overcrowding_impact > 0:
-        recommendations.append(
-            f"Redirecting {visitor_shift_percentage:.0f}% of tourists "
-            f"from {famous_destination} can reduce tourism pressure."
-        )
+        score += 25
 
-    # Hidden destination
     if accessibility_score >= 70:
-        recommendations.append(
-            f"{hidden_destination} has good accessibility and is suitable "
-            "for increased tourist distribution."
-        )
+        score += 25
     elif accessibility_score >= 40:
-        recommendations.append(
-            f"{hidden_destination} has moderate accessibility and should "
-            "receive tourists gradually."
-        )
-    else:
-        recommendations.append(
-            f"{hidden_destination} has limited accessibility, so tourism "
-            "growth should be introduced carefully."
-        )
+        score += 15
 
-    # Employment
     if employment_impact > 0:
-        recommendations.append(
-            "The redistribution can create additional employment "
-            "opportunities for the local community."
-        )
+        score += 15
 
-    # Local economy
     if local_purchase_impact > 0:
-        recommendations.append(
-            "Increased tourist activity may improve local purchases "
-            "and community income."
-        )
+        score += 10
 
-    # Government revenue
     if government_profit_impact > 0:
-        recommendations.append(
-            "The redistribution has potential to increase government "
-            "tourism-related revenue."
-        )
-
-    # Environment
-    environmental_benefits = []
+        score += 10
 
     if water_saving > 0:
-        environmental_benefits.append("water consumption")
+        score += 5
 
     if waste_impact > 0:
-        environmental_benefits.append("waste generation")
+        score += 5
 
     if pollution_impact > 0:
-        environmental_benefits.append("pollution")
+        score += 5
 
-    if environmental_benefits:
-        recommendations.append(
-            "The redistribution may provide environmental benefits "
-            "through reduced pressure on the overcrowded destination."
+    if score >= 75:
+        decision = "RECOMMENDED"
+    elif score >= 50:
+        decision = "CAUTION"
+    else:
+        decision = "NOT RECOMMENDED"
+
+    # -----------------------------------------
+    # Main recommendation
+    # -----------------------------------------
+
+    if decision == "RECOMMENDED":
+        opening = (
+            f"RECOMMENDED: A {visitor_shift_percentage:.0f}% redistribution "
+            f"from {famous_destination} to {hidden_destination} is advisable."
+        )
+    elif decision == "CAUTION":
+        opening = (
+            f"CAUTION: A {visitor_shift_percentage:.0f}% redistribution "
+            f"from {famous_destination} to {hidden_destination} may be "
+            "implemented gradually."
+        )
+    else:
+        opening = (
+            f"NOT RECOMMENDED: A {visitor_shift_percentage:.0f}% "
+            f"redistribution from {famous_destination} to "
+            f"{hidden_destination} should not be implemented at scale yet."
         )
 
-    if not recommendations:
-        recommendations.append(
-            "Tourist redistribution should be implemented gradually "
-            "while monitoring visitor pressure, infrastructure and "
-            "environmental conditions."
+    # -----------------------------------------
+    # Pressure impact
+    # -----------------------------------------
+
+    pressure = (
+        f"The redistribution can reduce tourism pressure at "
+        f"{famous_destination}."
+    )
+
+    # -----------------------------------------
+    # Accessibility
+    # -----------------------------------------
+
+    if accessibility_score >= 70:
+        accessibility = (
+            f"{hidden_destination} has strong accessibility "
+            f"({accessibility_score:.0f}/100) and can support increased "
+            "tourist activity."
+        )
+    elif accessibility_score >= 40:
+        accessibility = (
+            f"{hidden_destination} has moderate accessibility "
+            f"({accessibility_score:.0f}/100), so visitor growth should "
+            "be introduced gradually."
+        )
+    else:
+        accessibility = (
+            f"{hidden_destination} has limited accessibility "
+            f"({accessibility_score:.0f}/100), requiring infrastructure "
+            "improvements before significant visitor growth."
         )
 
-    return " ".join(recommendations)
+    # -----------------------------------------
+    # Economic impact
+    # -----------------------------------------
+
+    economic = ""
+
+    if employment_impact > 0 or local_purchase_impact > 0:
+        economic = (
+            "The strategy can support local employment, businesses and "
+            "community tourism income."
+        )
+
+    # -----------------------------------------
+    # Environmental impact
+    # -----------------------------------------
+
+    environmental = ""
+
+    if water_saving > 0 or waste_impact > 0 or pollution_impact > 0:
+        environmental = (
+            "It can also reduce environmental pressure through lower "
+            "water consumption, waste generation and pollution at the "
+            "overcrowded destination."
+        )
+
+    # -----------------------------------------
+    # Government action
+    # -----------------------------------------
+
+    if decision == "RECOMMENDED":
+        action = (
+            "Government action: implement the redistribution in phases "
+            "and continuously monitor visitor pressure, infrastructure, "
+            "water use, waste and pollution."
+        )
+    elif decision == "CAUTION":
+        action = (
+            "Government action: begin with a smaller visitor shift and "
+            "monitor infrastructure and accessibility before expanding."
+        )
+    else:
+        action = (
+            "Government action: improve destination infrastructure and "
+            "accessibility before increasing tourist redistribution."
+        )
+
+    return " ".join(
+        part
+        for part in [
+            opening,
+            pressure,
+            accessibility,
+            economic,
+            environmental,
+            action,
+        ]
+        if part
+    )

@@ -220,7 +220,15 @@ def get_footfall(
 def get_government_analytics(
     db: Session = Depends(get_db)
 ):
-    total_destinations = db.query(models.Destination).count()
+
+    total_destinations = (
+        db.query(models.Destination)
+        .filter(
+            models.Destination.approved == True
+        )
+        .count()
+    )
+
     total_guides = db.query(models.Guide).count()
 
     pending_places = (
@@ -743,6 +751,7 @@ def submit_place(
     latitude: float,
     longitude: float,
     image_url: Optional[str] = None,
+    video_url: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     user = (
@@ -766,6 +775,7 @@ def submit_place(
         latitude=latitude,
         longitude=longitude,
         image_url=image_url,
+        video_url=video_url,
         verification_status="PENDING"
     )
 
@@ -927,6 +937,7 @@ def approve_place(
         latitude=submission.latitude,
         longitude=submission.longitude,
         image_url=submission.image_url,
+        video_url=submission.video_url,
         destination_type="hidden",
         approved=True
     )

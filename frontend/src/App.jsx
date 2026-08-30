@@ -481,6 +481,7 @@ function PublicDashboard() {
     latitude: "",
     longitude: "",
     image_url: "",
+    video_url: "",
   });
 
   const [placeSubmitting, setPlaceSubmitting] = useState(false);
@@ -663,6 +664,9 @@ function PublicDashboard() {
       if (placeForm.image_url.trim()) {
         params.append("image_url", placeForm.image_url.trim());
       }
+      if (placeForm.video_url.trim()) {
+        params.append("video_url", placeForm.video_url.trim());
+      }
 
       const response = await fetch(
         `${API_URL}/places/submit?${params.toString()}`,
@@ -687,6 +691,7 @@ function PublicDashboard() {
         latitude: "",
         longitude: "",
         image_url: "",
+        video_url: "",
       });
     } catch (err) {
       console.error(err);
@@ -704,11 +709,10 @@ function PublicDashboard() {
 
     return (
       <article
-        className={`destination-card ${
-          isPopular
-            ? "popular-destination-card"
-            : "hidden-destination-card"
-        }`}
+        className={`destination-card ${isPopular
+          ? "popular-destination-card"
+          : "hidden-destination-card"
+          }`}
         key={
           destination?.id ??
           `${destination?.name}-${destination?.district}`
@@ -1056,6 +1060,25 @@ function PublicDashboard() {
                   This image will be used as the background card preview on the public dashboard once approved.
                 </span>
               </div>
+              <div className="hidden-form-group full">
+                <label>Video URL</label>
+
+                <input
+                  type="url"
+                  placeholder="Enter direct video URL (e.g. https://example.com/video.mp4)"
+                  value={placeForm.video_url}
+                  onChange={(e) =>
+                    setPlaceForm({
+                      ...placeForm,
+                      video_url: e.target.value,
+                    })
+                  }
+                />
+
+                <span className="form-hint">
+                  Add a direct video URL. The video will be shown when travellers open this hidden place.
+                </span>
+              </div>
 
               {placeError && (
                 <div className="hidden-place-error">{placeError}</div>
@@ -1322,9 +1345,8 @@ function DestinationDetails() {
                     <button
                       type="button"
                       key={star}
-                      className={`star-btn ${
-                        (reviewHoverRating || reviewRating) >= star ? "filled" : ""
-                      }`}
+                      className={`star-btn ${(reviewHoverRating || reviewRating) >= star ? "filled" : ""
+                        }`}
                       onClick={() => setReviewRating(star)}
                       onMouseEnter={() => setReviewHoverRating(star)}
                       onMouseLeave={() => setReviewHoverRating(0)}
