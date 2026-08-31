@@ -280,17 +280,11 @@ def get_government_analytics(
         .count()
     )
 
-    total_guides = db.query(models.Guide).count()
+   
 
     pending_places = (
         db.query(models.PlaceSubmission)
         .filter(models.PlaceSubmission.verification_status == "PENDING")
-        .count()
-    )
-
-    pending_guides = (
-        db.query(models.Guide)
-        .filter(models.Guide.verification_status == "PENDING")
         .count()
     )
 
@@ -341,9 +335,7 @@ def get_government_analytics(
 
     return {
         "total_destinations": total_destinations,
-        "total_guides": total_guides,
         "pending_places": pending_places,
-        "pending_guides": pending_guides,
         "total_visitors": total_visitors,
         "average_footfall": average_footfall,
         "top_destination": top_destination,
@@ -771,21 +763,6 @@ def get_stays(
     return stays
 
 
-# =========================
-# GET VERIFIED GUIDES
-# =========================
-
-@app.get("/guides")
-def get_guides(
-    db: Session = Depends(get_db)
-):
-    guides = (
-        db.query(models.Guide)
-        .filter(models.Guide.verification_status == "APPROVED")
-        .all()
-    )
-
-    return guides
 
 # =========================
 # SUBMIT NEW PLACE
@@ -866,103 +843,8 @@ async def submit_place(
         "status": submission.verification_status,
         "video_url": video_url
     }
-# =========================
-# REGISTER AS GUIDE
-# =========================
-
-@app.post("/guides/register")
-def register_guide(
-    user_id: int,
-    experience: str,
-    phone: str,
-    db: Session = Depends(get_db)
-):
-    user = (
-        db.query(models.User)
-        .filter(models.User.id == user_id)
-        .first()
-    )
-
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found"
-        )
-
-    existing_guide = (
-        db.query(models.Guide)
-        .filter(models.Guide.user_id == user_id)
-        .first()
-    )
-
-    if existing_guide:
-        raise HTTPException(
-            status_code=400,
-            detail="Guide application already exists"
-        )
-
-    guide = models.Guide(
-        user_id=user_id,
-        experience=experience,
-        phone=phone,
-        verification_status="PENDING"
-    )
-
-    db.add(guide)
-    db.commit()
-    db.refresh(guide)
-
-    return {
-        "message": "Guide application submitted",
-        "guide_id": guide.id,
-        "verification_status": "PENDING"
-    }
 
 
-# =========================
-# BOOK GUIDE
-# =========================
-
-@app.post("/guide/book")
-def book_guide(
-    user_id: int,
-    guide_id: int,
-    destination_id: int,
-    booking_date: str,
-    db: Session = Depends(get_db)
-):
-    guide = (
-        db.query(models.Guide)
-        .filter(
-            models.Guide.id == guide_id,
-            models.Guide.verification_status == "APPROVED"
-        )
-        .first()
-    )
-
-    if not guide:
-        raise HTTPException(
-            status_code=404,
-            detail="Verified guide not found"
-        )
-
-    booking = models.GuideBooking(
-        guide_id=guide_id,
-        user_id=user_id,
-        destination_id=destination_id,
-        booking_date=booking_date,
-        status="PENDING"
-    )
-
-    db.add(booking)
-    db.commit()
-    db.refresh(booking)
-
-    return {
-        "message": "Guide booking request created",
-        "booking_id": booking.id,
-        "status": "PENDING"
-    }
 
 
 # =========================
@@ -1057,81 +939,6 @@ def reject_place(
     }
 
 
-# =========================
-# GOVERNMENT: VIEW PENDING GUIDES
-# =========================
-
-@app.get("/government/guides")
-def get_pending_guides(
-    db: Session = Depends(get_db)
-):
-    guides = (
-        db.query(models.Guide)
-        .filter(models.Guide.verification_status == "PENDING")
-        .all()
-    )
-
-    return guides
-
-
-# =========================
-# GOVERNMENT: APPROVE GUIDE
-# =========================
-
-@app.put("/government/guide/{guide_id}/approve")
-def approve_guide(
-    guide_id: int,
-    db: Session = Depends(get_db)
-):
-    guide = (
-        db.query(models.Guide)
-        .filter(models.Guide.id == guide_id)
-        .first()
-    )
-
-    if not guide:
-        raise HTTPException(
-            status_code=404,
-            detail="Guide application not found"
-        )
-
-    guide.verification_status = "APPROVED"
-    db.commit()
-
-    return {
-        "message": "Guide approved successfully",
-        "guide_id": guide.id
-    }
-
-
-# =========================
-# GOVERNMENT: REJECT GUIDE
-# =========================
-
-@app.put("/government/guide/{guide_id}/reject")
-def reject_guide(
-    guide_id: int,
-    db: Session = Depends(get_db)
-):
-    guide = (
-        db.query(models.Guide)
-        .filter(models.Guide.id == guide_id)
-        .first()
-    )
-
-    if not guide:
-        raise HTTPException(
-            status_code=404,
-            detail="Guide application not found"
-        )
-
-    guide.verification_status = "REJECTED"
-    db.commit()
-
-    return {
-        "message": "Guide rejected",
-        "guide_id": guide.id
-    }
 
 
 # =====================================================

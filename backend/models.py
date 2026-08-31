@@ -64,59 +64,7 @@ class Destination(Base):
     pollution_level = Column(Float, default=0)
 
 
-# =========================
-# GUIDES
-# =========================
 
-class Guide(Base):
-    __tablename__ = "guides"
-
-    id = Column(Integer, primary_key=True, index=True)
-
-    user_id = Column(
-        Integer,
-        ForeignKey("users.id")
-    )
-
-    experience = Column(String(100))
-    phone = Column(String(20))
-
-    verification_status = Column(
-        String(30),
-        default="PENDING"
-    )
-
-
-# =========================
-# GUIDE BOOKINGS
-# =========================
-
-class GuideBooking(Base):
-    __tablename__ = "guide_bookings"
-
-    id = Column(Integer, primary_key=True, index=True)
-
-    guide_id = Column(
-        Integer,
-        ForeignKey("guides.id")
-    )
-
-    user_id = Column(
-        Integer,
-        ForeignKey("users.id")
-    )
-
-    destination_id = Column(
-        Integer,
-        ForeignKey("destinations.id")
-    )
-
-    booking_date = Column(String(30))
-
-    status = Column(
-        String(30),
-        default="PENDING"
-    )
 
 
 # =========================
