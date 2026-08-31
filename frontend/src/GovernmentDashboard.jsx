@@ -12,7 +12,6 @@ function GovernmentDashboard() {
   const navigate = useNavigate();
 
   const [submissions, setSubmissions] = useState([]);
-  const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [error, setError] = useState("");
@@ -99,12 +98,11 @@ function GovernmentDashboard() {
 
       const [
         submissionsResponse,
-        guidesResponse,
         analyticsResponse,
         scoresResponse,
       ] = await Promise.all([
         fetch(`${API_URL}/government/place-submissions`),
-        fetch(`${API_URL}/government/guides`),
+        
         fetch(`${API_URL}/government/analytics`),
         fetch(`${API_URL}/government/destination-scores`),
       ]);
@@ -112,9 +110,7 @@ function GovernmentDashboard() {
       const submissionsData = submissionsResponse.ok
         ? await submissionsResponse.json()
         : [];
-      const guidesData = guidesResponse.ok
-        ? await guidesResponse.json()
-        : [];
+      
       const analyticsData = analyticsResponse.ok
         ? await analyticsResponse.json()
         : null;
@@ -123,7 +119,7 @@ function GovernmentDashboard() {
         : [];
 
       setSubmissions(Array.isArray(submissionsData) ? submissionsData : []);
-      setGuides(Array.isArray(guidesData) ? guidesData : []);
+     
       setAnalytics(analyticsData);
       setDestinationScores(Array.isArray(scoresData) ? scoresData : []);
 
@@ -212,42 +208,13 @@ function GovernmentDashboard() {
     }
   };
 
-  const handleGuideAction = async (guideId, action) => {
-    try {
-      setActionLoading(`guide-${guideId}-${action}`);
-      setError("");
-      setSuccess("");
 
-      const response = await fetch(
-        `${API_URL}/government/guide/${guideId}/${action}`,
-        { method: "PUT" }
-      );
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.detail || `Failed to ${action} guide`);
-      }
-
-      setSuccess(
-        action === "approve"
-          ? "Guide approved successfully."
-          : "Guide rejected successfully."
-      );
-      await fetchGovernmentData();
-    } catch (err) {
-      console.error(err);
-      setError(err.message || `Unable to ${action} guide.`);
-    } finally {
-      setActionLoading(null);
-    }
-  };
 
   const pendingPlaces = submissions.filter(
     (item) => !item.verification_status || item.verification_status === "PENDING"
   ).length;
 
-  const pendingGuides = guides.filter(
-    (guide) => !guide.verification_status || guide.verification_status === "PENDING"
-  ).length;
+ 
 
   return (
     <div className="gov-dashboard">
@@ -268,7 +235,7 @@ function GovernmentDashboard() {
           <div className="gov-eyebrow">GOVERNMENT PORTAL</div>
           <h1>Tourism Dashboard</h1>
           <p>
-            Verify destinations, approve local guides, and simulate tourist redistribution impact.
+            Verify destinations and simulate tourist redistribution impact.
           </p>
         </section>
 
@@ -292,11 +259,7 @@ function GovernmentDashboard() {
             <p>Awaiting verification</p>
           </div>
 
-          <div className="government-stat-card">
-            <span className="stat-label">Pending Guides</span>
-            <strong>{pendingGuides}</strong>
-            <p>Awaiting verification</p>
-          </div>
+         
 
           <div className="government-stat-card">
             <span className="stat-label">Tourist Redistribution</span>
@@ -381,66 +344,6 @@ function GovernmentDashboard() {
           )}
         </section>
 
-        {/* GUIDE APPLICATIONS */}
-        <section className="government-section">
-          <div className="government-section-heading">
-            <div>
-              <span>GUIDE VERIFICATION</span>
-              <h2>Guide Applications</h2>
-            </div>
-            <span className="count-badge">{pendingGuides}</span>
-          </div>
-
-          {loading ? (
-            <div className="gov-loading">Loading guide applications...</div>
-          ) : guides.length === 0 ? (
-            <div className="government-empty">
-              <h3>No guide applications</h3>
-              <p>There are currently no guides waiting for verification.</p>
-            </div>
-          ) : (
-            <div className="government-list">
-              {guides.map((guide) => (
-                <div className="government-review-card" key={guide.id}>
-                  <div className="government-card-content">
-                    <div className="submission-status">
-                      {guide.verification_status || "PENDING"}
-                    </div>
-                    <h3>👨‍💼 Guide #{guide.id}</h3>
-                    <p>Experience: {guide.experience || "Not provided"}</p>
-                    <p>📞 {guide.phone || "No phone number"}</p>
-                    <p>User ID: {guide.user_id}</p>
-                  </div>
-
-                  {(guide.verification_status === "PENDING" ||
-                    !guide.verification_status) && (
-                      <div className="government-actions">
-                        <button
-                          className="approve-button"
-                          disabled={actionLoading !== null}
-                          onClick={() => handleGuideAction(guide.id, "approve")}
-                        >
-                          {actionLoading === `guide-${guide.id}-approve`
-                            ? "Approving..."
-                            : "✓ Approve"}
-                        </button>
-
-                        <button
-                          className="reject-button"
-                          disabled={actionLoading !== null}
-                          onClick={() => handleGuideAction(guide.id, "reject")}
-                        >
-                          {actionLoading === `guide-${guide.id}-reject`
-                            ? "Rejecting..."
-                            : "✕ Reject"}
-                        </button>
-                      </div>
-                    )}
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
 
         {/* ANALYTICS */}
         <section className="government-section">

@@ -27,14 +27,12 @@ The platform provides separate public and government-oriented functionality, inc
 - Destination discovery
 - Destination information
 - Destination details
-- Guide information
 - Tourism-related destination data
 
 ### Government Features
 
 - Government dashboard
 - Destination verification
-- Guide verification
 - Tourism analytics
 - Destination Health
 - Tourism Pressure Scores

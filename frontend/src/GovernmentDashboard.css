@@ -1049,3 +1049,73 @@
   line-height: 1.7;
   margin: 0;
 }
+/* =====================================================
+   FINAL DASHBOARD ALIGNMENT
+===================================================== */
+
+.gov-dashboard {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 40px 80px;
+  box-sizing: border-box;
+}
+
+.government-stats {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 70px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  align-items: stretch;
+}
+
+.government-stat-card {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.government-section {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.government-section-heading {
+  width: 100%;
+  text-align: center;
+}
+
+.government-review-card,
+.government-empty,
+.gov-loading {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Better alignment on smaller screens */
+@media (max-width: 900px) {
+  .gov-dashboard {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .government-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .gov-dashboard {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .government-stats {
+    grid-template-columns: 1fr;
+  }
+}

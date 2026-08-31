@@ -22,7 +22,6 @@ import {
   Star,
 } from "lucide-react";
 import "./App.css";
-import GuideRegistration from "./GuideRegistration";
 import GovernmentDashboard from "./GovernmentDashboard";
 
 // =====================================================
@@ -127,7 +126,7 @@ function Home() {
 
             <div className="login-card-content">
               <h2 className="public-login-title">Public Login</h2>
-              <p>Discover hidden destinations, guides, stays and local experiences.</p>
+              <p>Discover hidden destinations, stays and local experiences.</p>
             </div>
 
             <ArrowRight className="arrow" />
@@ -803,13 +802,6 @@ function PublicDashboard() {
         </div>
 
         <div className="explore-nav-actions">
-          <button
-            type="button"
-            className="navbar-guide-button"
-            onClick={() => navigate("/guide-registration")}
-          >
-            👨‍💼 Become a Guide
-          </button>
 
           <button
             type="button"
@@ -1519,14 +1511,6 @@ function App() {
         <Route
           path="/destination/:destination_id"
           element={<DestinationDetails />}
-        />
-        <Route
-          path="/guide-registration"
-          element={
-            <GuideRegistration
-              userId={localStorage.getItem("user_id")}
-            />
-          }
         />
         <Route path="/government" element={<GovernmentDashboard />} />
       </Routes>
