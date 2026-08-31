@@ -481,10 +481,12 @@ function PublicDashboard() {
     latitude: "",
     longitude: "",
     image_url: "",
-    video_url: "",
+    
   });
 
   const [placeSubmitting, setPlaceSubmitting] = useState(false);
+  const [videoFile, setVideoFile] = useState(null);
+  const [videoUploading, setVideoUploading] = useState(false);
   const [placeMessage, setPlaceMessage] = useState("");
   const [placeError, setPlaceError] = useState("");
 
@@ -650,6 +652,34 @@ function PublicDashboard() {
 
     try {
       setPlaceSubmitting(true);
+      let uploadedVideoUrl = "";
+
+      if (videoFile) {
+        setVideoUploading(true);
+
+        const videoData = new FormData();
+        videoData.append("video", videoFile);
+
+        const videoResponse = await fetch(
+          `${API_URL}/upload-video`,
+          {
+            method: "POST",
+            body: videoData,
+          }
+        );
+
+        const videoResult = await videoResponse.json();
+
+        if (!videoResponse.ok) {
+          throw new Error(
+            videoResult.detail || "Video upload failed."
+          );
+        }
+
+        uploadedVideoUrl = videoResult.video_url;
+
+        setVideoUploading(false);
+      }
 
       const params = new URLSearchParams({
         user_id: userId,
@@ -664,9 +694,10 @@ function PublicDashboard() {
       if (placeForm.image_url.trim()) {
         params.append("image_url", placeForm.image_url.trim());
       }
-      if (placeForm.video_url.trim()) {
-        params.append("video_url", placeForm.video_url.trim());
+      if (uploadedVideoUrl) {
+        params.append("video_url", uploadedVideoUrl);
       }
+
 
       const response = await fetch(
         `${API_URL}/places/submit?${params.toString()}`,
@@ -1060,25 +1091,30 @@ function PublicDashboard() {
                   This image will be used as the background card preview on the public dashboard once approved.
                 </span>
               </div>
+              {/* VIDEO INSERTION PLACE */}
               <div className="hidden-form-group full">
-                <label>Video URL</label>
+                <label>Destination Video</label>
 
                 <input
-                  type="url"
-                  placeholder="Enter direct video URL (e.g. https://example.com/video.mp4)"
-                  value={placeForm.video_url}
-                  onChange={(e) =>
-                    setPlaceForm({
-                      ...placeForm,
-                      video_url: e.target.value,
-                    })
-                  }
+                  type="file"
+                  accept="video/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    setVideoFile(file);
+                  }}
                 />
 
                 <span className="form-hint">
-                  Add a direct video URL. The video will be shown when travellers open this hidden place.
+                  Select a video directly from your gallery. MP4, WebM, MOV or AVI are supported.
                 </span>
+
+                {videoFile && (
+                  <span className="form-hint">
+                    Selected: {videoFile.name}
+                  </span>
+                )}
               </div>
+
 
               {placeError && (
                 <div className="hidden-place-error">{placeError}</div>
@@ -1306,6 +1342,26 @@ function DestinationDetails() {
               "Discover this beautiful destination and explore what makes it special."}
           </p>
         </section>
+
+                {/* DESTINATION VIDEO */}
+        {destination.video_url && (
+          <section className="details-section destination-video-section">
+            <div className="details-section-heading">
+              <span>EXPLORE THE DESTINATION</span>
+              <h2>Destination Video</h2>
+            </div>
+
+            <video
+              className="destination-video"
+              controls
+              playsInline
+              preload="metadata"
+              src={`${API_URL}${destination.video_url}`}
+            >
+              Your browser does not support video playback.
+            </video>
+          </section>
+        )}
 
         {/* STATS */}
         <div className="destination-stats">

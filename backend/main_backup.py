@@ -791,9 +791,10 @@ def get_guides(
 # SUBMIT NEW PLACE
 # ACCEPTS IMAGE URL + VIDEO FILE
 # =========================
+
 @app.post("/places/submit")
 async def submit_place(
-    user_id: int = Form(...),
+    user_id: int,
     name: str = Form(...),
     state: str = Form(...),
     district: str = Form(...),
@@ -818,13 +819,13 @@ async def submit_place(
 
     video_url = None
 
+    # SAVE VIDEO FILE
     if video and video.filename:
         allowed_extensions = {
             ".mp4",
             ".webm",
             ".mov",
-            ".avi",
-            ".m4v"
+            ".avi"
         }
 
         extension = os.path.splitext(video.filename)[1].lower()
@@ -832,16 +833,16 @@ async def submit_place(
         if extension not in allowed_extensions:
             raise HTTPException(
                 status_code=400,
-                detail="Unsupported video format."
+                detail="Unsupported video format. Use MP4, WebM, MOV or AVI."
             )
 
-        unique_name = f"{uuid.uuid4()}{extension}"
-        video_path = os.path.join(UPLOAD_DIR, unique_name)
+        filename = f"{uuid.uuid4()}{extension}"
+        video_path = os.path.join(UPLOAD_DIR, filename)
 
         with open(video_path, "wb") as buffer:
             shutil.copyfileobj(video.file, buffer)
 
-        video_url = f"/uploads/videos/{unique_name}"
+        video_url = f"/uploads/videos/{filename}"
 
     submission = models.PlaceSubmission(
         user_id=user_id,
@@ -866,6 +867,7 @@ async def submit_place(
         "status": submission.verification_status,
         "video_url": video_url
     }
+
 # =========================
 # REGISTER AS GUIDE
 # =========================
