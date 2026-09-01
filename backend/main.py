@@ -1,41 +1,45 @@
-from fastapi import FastAPI, Depends, HTTPException, Form
-from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-from typing import Optional
-from reviews import router as reviews_router
-from ai import generate_ai_recommendation
-from database import engine, Base, get_db
-import models
 import os
 import shutil
 import uuid
-from fastapi import UploadFile, File
+from typing import Optional
+
+from fastapi import FastAPI, Depends, HTTPException, Form, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.orm import Session
+
+from database import engine, Base, get_db
+import models
+from reviews import router as reviews_router
+from ai import generate_ai_recommendation
 
 # ---------------------------------------------------------
-# LATEST REDISTRIBUTION SCENARIO
+# DIRECTORY CONFIGURATION & MOUNTING
 # ---------------------------------------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
+IMAGE_UPLOAD_DIR = os.path.join(BASE_UPLOAD_DIR, "images")
+VIDEO_UPLOAD_DIR = os.path.join(BASE_UPLOAD_DIR, "videos")
 
-latest_redistribution = {
-    "famous_destination_id": None,
-    "hidden_destination_id": None,
-    "visitor_shift_percentage": 0,
-}
+os.makedirs(IMAGE_UPLOAD_DIR, exist_ok=True)
+os.makedirs(VIDEO_UPLOAD_DIR, exist_ok=True)
 
-app = FastAPI(title="S21 Tourism API")
-UPLOAD_DIR = "uploads/videos"
+app = FastAPI(title="Tourism API")
 
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
+# Mount the entire uploads directory so /uploads/images/... and /uploads/videos/... resolve correctly
 app.mount(
     "/uploads",
-    StaticFiles(directory="uploads"),
+    StaticFiles(directory=BASE_UPLOAD_DIR),
     name="uploads"
 )
 
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5174",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -44,58 +48,26 @@ app.add_middleware(
 Base.metadata.create_all(bind=engine)
 app.include_router(reviews_router)
 
-@app.post("/upload-video")
-async def upload_video(
-    video: UploadFile = File(...)
-):
-    allowed_types = {
-        "video/mp4",
-        "video/webm",
-        "video/quicktime",
-        "video/x-msvideo",
-    }
-
-    if video.content_type not in allowed_types:
-        raise HTTPException(
-            status_code=400,
-            detail="Unsupported video format. Please upload MP4, WebM, MOV or AVI."
-        )
-
-    extension = os.path.splitext(video.filename or "")[1].lower()
-
-    if not extension:
-        extension = ".mp4"
-
-    filename = f"{uuid.uuid4().hex}{extension}"
-
-    file_path = os.path.join(
-        UPLOAD_DIR,
-        filename
-    )
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(video.file, buffer)
-
-    return {
-        "message": "Video uploaded successfully",
-        "video_url": f"/uploads/videos/{filename}"
-    }
+# ---------------------------------------------------------
+# LATEST REDISTRIBUTION SCENARIO
+# ---------------------------------------------------------
+latest_redistribution = {
+    "famous_destination_id": None,
+    "hidden_destination_id": None,
+    "visitor_shift_percentage": 0,
+}
 
 # =========================
 # HOME
 # =========================
-
 @app.get("/")
 def home():
-    return {
-        "message": "S21 Tourism Backend is Running"
-    }
+    return {"message": "S21 Tourism Backend is Running"}
 
 
 # =========================
 # LOGIN
 # =========================
-
 @app.post("/login")
 def login(
     email: str = Form(...),
@@ -127,9 +99,77 @@ def login(
 
 
 # =========================
+# FILE UPLOAD ENDPOINTS
+# =========================
+@app.post("/upload-image")
+async def upload_image(
+    image: UploadFile = File(...)
+):
+    allowed_types = {
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/jpg",
+    }
+
+    if image.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported image format. Please upload JPG, PNG or WebP."
+        )
+
+    extension = os.path.splitext(image.filename or "")[1].lower()
+    if not extension:
+        extension = ".jpg"
+
+    filename = f"{uuid.uuid4().hex}{extension}"
+    image_path = os.path.join(IMAGE_UPLOAD_DIR, filename)
+
+    with open(image_path, "wb") as buffer:
+        shutil.copyfileobj(image.file, buffer)
+
+    return {
+        "message": "Image uploaded successfully",
+        "image_url": f"/uploads/images/{filename}"
+    }
+
+
+@app.post("/upload-video")
+async def upload_video(
+    video: UploadFile = File(...)
+):
+    allowed_types = {
+        "video/mp4",
+        "video/webm",
+        "video/quicktime",
+        "video/x-msvideo",
+    }
+
+    if video.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported video format. Please upload MP4, WebM, MOV or AVI."
+        )
+
+    extension = os.path.splitext(video.filename or "")[1].lower()
+    if not extension:
+        extension = ".mp4"
+
+    filename = f"{uuid.uuid4().hex}{extension}"
+    video_path = os.path.join(VIDEO_UPLOAD_DIR, filename)
+
+    with open(video_path, "wb") as buffer:
+        shutil.copyfileobj(video.file, buffer)
+
+    return {
+        "message": "Video uploaded successfully",
+        "video_url": f"/uploads/videos/{filename}"
+    }
+
+
+# =========================
 # GET STATES
 # =========================
-
 @app.get("/states")
 def get_states(db: Session = Depends(get_db)):
     states = (
@@ -138,14 +178,12 @@ def get_states(db: Session = Depends(get_db)):
         .distinct()
         .all()
     )
-
     return [state[0] for state in states]
 
 
 # =========================
 # GET HIDDEN & APPROVED DESTINATIONS
 # =========================
-
 @app.get("/destinations/{state}")
 def get_destinations(
     state: str,
@@ -159,14 +197,30 @@ def get_destinations(
         )
         .all()
     )
+    return destinations
 
+
+# =========================
+# GET POPULAR DESTINATIONS
+# =========================
+@app.get("/popular-destinations")
+def get_popular_destinations(
+    db: Session = Depends(get_db)
+):
+    destinations = (
+        db.query(models.Destination)
+        .filter(
+            models.Destination.destination_type.in_(["popular", "famous"]),
+            models.Destination.approved == True
+        )
+        .all()
+    )
     return destinations
 
 
 # =========================
 # GET DESTINATION DETAILS
 # =========================
-
 @app.get("/destination/{destination_id}")
 def get_destination(
     destination_id: int,
@@ -188,9 +242,8 @@ def get_destination(
 
 
 # =========================
-# GET REVIEWS
+# REVIEWS
 # =========================
-
 @app.get("/reviews/{destination_id}")
 def get_reviews(
     destination_id: int,
@@ -202,13 +255,8 @@ def get_reviews(
         .order_by(models.Review.id.desc())
         .all()
     )
-
     return reviews
 
-
-# =========================
-# ADD REVIEW
-# =========================
 
 @app.post("/reviews")
 def add_review(
@@ -248,7 +296,6 @@ def add_review(
 # =========================
 # GET FOOTFALL
 # =========================
-
 @app.get("/footfall/{destination_id}")
 def get_footfall(
     destination_id: int,
@@ -259,28 +306,196 @@ def get_footfall(
         .filter(models.Footfall.destination_id == destination_id)
         .all()
     )
-
     return data
+
+
+# =========================
+# GET NEARBY STAYS
+# =========================
+@app.get("/stays/{destination_id}")
+def get_stays(
+    destination_id: int,
+    db: Session = Depends(get_db)
+):
+    stays = (
+        db.query(models.Stay)
+        .filter(models.Stay.destination_id == destination_id)
+        .all()
+    )
+    return stays
+
+
+# =========================
+# SUBMIT NEW PLACE
+# (Accepts file upload or text URL fallback)
+# =========================
+@app.post("/places/submit")
+async def submit_place(
+    user_id: int = Form(...),
+    name: str = Form(...),
+    state: str = Form(...),
+    district: str = Form(...),
+    description: str = Form(...),
+    latitude: float = Form(...),
+    longitude: float = Form(...),
+    image_url: Optional[str] = Form(None),
+    image: Optional[UploadFile] = File(None),
+    video: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db)
+):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    final_image_url = image_url
+
+    # Save uploaded image file if provided
+    if image and image.filename:
+        allowed_img_types = {"image/jpeg", "image/png", "image/webp", "image/jpg"}
+        if image.content_type in allowed_img_types:
+            img_ext = os.path.splitext(image.filename)[1].lower() or ".jpg"
+            img_name = f"{uuid.uuid4().hex}{img_ext}"
+            img_path = os.path.join(IMAGE_UPLOAD_DIR, img_name)
+            
+            with open(img_path, "wb") as buffer:
+                shutil.copyfileobj(image.file, buffer)
+            final_image_url = f"/uploads/images/{img_name}"
+
+    # Save uploaded video file if provided
+    final_video_url = None
+    if video and video.filename:
+        allowed_vid_types = {".mp4", ".webm", ".mov", ".avi", ".m4v"}
+        vid_ext = os.path.splitext(video.filename)[1].lower()
+        if vid_ext in allowed_vid_types:
+            vid_name = f"{uuid.uuid4().hex}{vid_ext}"
+            vid_path = os.path.join(VIDEO_UPLOAD_DIR, vid_name)
+            
+            with open(vid_path, "wb") as buffer:
+                shutil.copyfileobj(video.file, buffer)
+            final_video_url = f"/uploads/videos/{vid_name}"
+
+    submission = models.PlaceSubmission(
+        user_id=user_id,
+        name=name,
+        state=state,
+        district=district,
+        description=description,
+        latitude=latitude,
+        longitude=longitude,
+        image_url=final_image_url,
+        video_url=final_video_url,
+        verification_status="PENDING"
+    )
+
+    db.add(submission)
+    db.commit()
+    db.refresh(submission)
+
+    return {
+        "message": "Place submitted successfully",
+        "submission_id": submission.id,
+        "status": submission.verification_status,
+        "image_url": final_image_url,
+        "video_url": final_video_url
+    }
+
+
+# =========================
+# GOVERNMENT: PLACE SUBMISSIONS
+# =========================
+@app.get("/government/place-submissions")
+def get_place_submissions(
+    db: Session = Depends(get_db)
+):
+    submissions = (
+        db.query(models.PlaceSubmission)
+        .filter(models.PlaceSubmission.verification_status == "PENDING")
+        .all()
+    )
+    return submissions
+
+
+@app.put("/government/place/{submission_id}/approve")
+def approve_place(
+    submission_id: int,
+    db: Session = Depends(get_db)
+):
+    submission = (
+        db.query(models.PlaceSubmission)
+        .filter(models.PlaceSubmission.id == submission_id)
+        .first()
+    )
+
+    if not submission:
+        raise HTTPException(
+            status_code=404,
+            detail="Place submission not found"
+        )
+
+    submission.verification_status = "APPROVED"
+
+    destination = models.Destination(
+        name=submission.name,
+        state=submission.state,
+        district=submission.district,
+        description=submission.description,
+        latitude=submission.latitude,
+        longitude=submission.longitude,
+        image_url=submission.image_url,
+        video_url=submission.video_url,
+        destination_type="hidden",
+        approved=True
+    )
+
+    db.add(destination)
+    db.commit()
+
+    return {
+        "message": "Place approved successfully",
+        "place": submission.name
+    }
+
+
+@app.put("/government/place/{submission_id}/reject")
+def reject_place(
+    submission_id: int,
+    db: Session = Depends(get_db)
+):
+    submission = (
+        db.query(models.PlaceSubmission)
+        .filter(models.PlaceSubmission.id == submission_id)
+        .first()
+    )
+
+    if not submission:
+        raise HTTPException(
+            status_code=404,
+            detail="Place submission not found"
+        )
+
+    submission.verification_status = "REJECTED"
+    db.commit()
+
+    return {
+        "message": "Place rejected",
+        "place": submission.name
+    }
 
 
 # =========================
 # GOVERNMENT ANALYTICS
 # =========================
-
 @app.get("/government/analytics")
 def get_government_analytics(
     db: Session = Depends(get_db)
 ):
-
     total_destinations = (
         db.query(models.Destination)
-        .filter(
-            models.Destination.approved == True
-        )
+        .filter(models.Destination.approved == True)
         .count()
     )
 
-   
+    total_guides = db.query(models.Guide).count()
 
     pending_places = (
         db.query(models.PlaceSubmission)
@@ -289,11 +504,7 @@ def get_government_analytics(
     )
 
     footfall_records = db.query(models.Footfall).all()
-
-    total_visitors = sum(
-        record.visitor_count or 0 for record in footfall_records
-    )
-
+    total_visitors = sum(record.visitor_count or 0 for record in footfall_records)
     average_footfall = (
         round(total_visitors / len(footfall_records))
         if footfall_records
@@ -310,9 +521,7 @@ def get_government_analytics(
 
     top_destination = None
     if destination_totals:
-        top_destination_id = max(
-            destination_totals, key=destination_totals.get
-        )
+        top_destination_id = max(destination_totals, key=destination_totals.get)
         destination = (
             db.query(models.Destination)
             .filter(models.Destination.id == top_destination_id)
@@ -346,7 +555,6 @@ def get_government_analytics(
 # =========================
 # AI ANALYSIS
 # =========================
-
 @app.get("/government/ai-analysis")
 def get_ai_analysis(
     db: Session = Depends(get_db)
@@ -395,7 +603,6 @@ def get_ai_analysis(
 # =========================
 # SIMULATE REDISTRIBUTION
 # =========================
-
 @app.post("/government/simulate-redistribution")
 def simulate_redistribution(
     famous_destination_id: int,
@@ -536,7 +743,6 @@ def simulate_redistribution(
 # =========================
 # DESTINATION SCORES
 # =========================
-
 @app.get("/government/destination-scores")
 def get_destination_scores(
     db: Session = Depends(get_db)
@@ -630,7 +836,6 @@ def get_destination_scores(
 # =========================
 # RECOMMENDED DESTINATION
 # =========================
-
 @app.get("/government/recommended-destination")
 def recommended_destination(
     db: Session = Depends(get_db)
@@ -763,6 +968,21 @@ def get_stays(
     return stays
 
 
+# =========================
+# GET VERIFIED GUIDES
+# =========================
+
+@app.get("/guides")
+def get_guides(
+    db: Session = Depends(get_db)
+):
+    guides = (
+        db.query(models.Guide)
+        .filter(models.Guide.verification_status == "APPROVED")
+        .all()
+    )
+
+    return guides
 
 # =========================
 # SUBMIT NEW PLACE
@@ -813,7 +1033,7 @@ async def submit_place(
             )
 
         unique_name = f"{uuid.uuid4()}{extension}"
-        video_path = os.path.join(UPLOAD_DIR, unique_name)
+        video_path = os.path.join(VIDEO_UPLOAD_DIR, unique_name)
 
         with open(video_path, "wb") as buffer:
             shutil.copyfileobj(video.file, buffer)
@@ -843,8 +1063,103 @@ async def submit_place(
         "status": submission.verification_status,
         "video_url": video_url
     }
+# =========================
+# REGISTER AS GUIDE
+# =========================
+
+@app.post("/guides/register")
+def register_guide(
+    user_id: int,
+    experience: str,
+    phone: str,
+    db: Session = Depends(get_db)
+):
+    user = (
+        db.query(models.User)
+        .filter(models.User.id == user_id)
+        .first()
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    existing_guide = (
+        db.query(models.Guide)
+        .filter(models.Guide.user_id == user_id)
+        .first()
+    )
+
+    if existing_guide:
+        raise HTTPException(
+            status_code=400,
+            detail="Guide application already exists"
+        )
+
+    guide = models.Guide(
+        user_id=user_id,
+        experience=experience,
+        phone=phone,
+        verification_status="PENDING"
+    )
+
+    db.add(guide)
+    db.commit()
+    db.refresh(guide)
+
+    return {
+        "message": "Guide application submitted",
+        "guide_id": guide.id,
+        "verification_status": "PENDING"
+    }
 
 
+# =========================
+# BOOK GUIDE
+# =========================
+
+@app.post("/guide/book")
+def book_guide(
+    user_id: int,
+    guide_id: int,
+    destination_id: int,
+    booking_date: str,
+    db: Session = Depends(get_db)
+):
+    guide = (
+        db.query(models.Guide)
+        .filter(
+            models.Guide.id == guide_id,
+            models.Guide.verification_status == "APPROVED"
+        )
+        .first()
+    )
+
+    if not guide:
+        raise HTTPException(
+            status_code=404,
+            detail="Verified guide not found"
+        )
+
+    booking = models.GuideBooking(
+        guide_id=guide_id,
+        user_id=user_id,
+        destination_id=destination_id,
+        booking_date=booking_date,
+        status="PENDING"
+    )
+
+    db.add(booking)
+    db.commit()
+    db.refresh(booking)
+
+    return {
+        "message": "Guide booking request created",
+        "booking_id": booking.id,
+        "status": "PENDING"
+    }
 
 
 # =========================
@@ -939,6 +1254,81 @@ def reject_place(
     }
 
 
+# =========================
+# GOVERNMENT: VIEW PENDING GUIDES
+# =========================
+
+@app.get("/government/guides")
+def get_pending_guides(
+    db: Session = Depends(get_db)
+):
+    guides = (
+        db.query(models.Guide)
+        .filter(models.Guide.verification_status == "PENDING")
+        .all()
+    )
+
+    return guides
+
+
+# =========================
+# GOVERNMENT: APPROVE GUIDE
+# =========================
+
+@app.put("/government/guide/{guide_id}/approve")
+def approve_guide(
+    guide_id: int,
+    db: Session = Depends(get_db)
+):
+    guide = (
+        db.query(models.Guide)
+        .filter(models.Guide.id == guide_id)
+        .first()
+    )
+
+    if not guide:
+        raise HTTPException(
+            status_code=404,
+            detail="Guide application not found"
+        )
+
+    guide.verification_status = "APPROVED"
+    db.commit()
+
+    return {
+        "message": "Guide approved successfully",
+        "guide_id": guide.id
+    }
+
+
+# =========================
+# GOVERNMENT: REJECT GUIDE
+# =========================
+
+@app.put("/government/guide/{guide_id}/reject")
+def reject_guide(
+    guide_id: int,
+    db: Session = Depends(get_db)
+):
+    guide = (
+        db.query(models.Guide)
+        .filter(models.Guide.id == guide_id)
+        .first()
+    )
+
+    if not guide:
+        raise HTTPException(
+            status_code=404,
+            detail="Guide application not found"
+        )
+
+    guide.verification_status = "REJECTED"
+    db.commit()
+
+    return {
+        "message": "Guide rejected",
+        "guide_id": guide.id
+    }
 
 
 # =====================================================

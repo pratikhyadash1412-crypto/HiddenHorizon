@@ -44,13 +44,13 @@ const LOCATION_IMAGES = {
   beach:
     "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2200&q=85",
   konark:
-    "https://www.google.com/url?sa=t&source=web&rct=j&url=https%3A%2F%2Funsplash.com%2Fs%2Fphotos%2Fkonark&ved=0CBYQjRxqFwoTCMCZiprisZYDFQAAAAAdAAAAABBu&opi=89978449",
+    "https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?auto=format&fit=crop&w=2200&q=85",
   defaultHill:
-    "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80",
+    "https://static2.tripoto.com/media/filter/tst/img/2341218/SpotDocument/1762445786_1762445785742.jpg.webp",
 };
 
 // =====================================================
-// GET DESTINATION IMAGE (PRIORITIZES CUSTOM ENTERED URL)
+// GET DESTINATION IMAGE
 // =====================================================
 function getLocationImage(destination) {
   const customImg =
@@ -61,18 +61,23 @@ function getLocationImage(destination) {
     destination?.photo;
 
   if (customImg && typeof customImg === "string" && customImg.trim() !== "") {
-    return customImg.trim();
+    const image = customImg.trim();
+
+    // If backend returned a relative upload path, resolve to FastAPI host
+    if (image.startsWith("/")) {
+      return `${API_URL}${image}`;
+    }
+    return image;
   }
 
   const name = destination?.name?.toLowerCase() || "";
+
   if (name.includes("konark")) return LOCATION_IMAGES.konark;
   if (name.includes("puri") || name.includes("beach")) return LOCATION_IMAGES.beach;
   if (name.includes("deomali")) return LOCATION_IMAGES.deomali;
   if (name.includes("mahendragiri")) return LOCATION_IMAGES.mahendragiri;
-  if (name.includes("kandhamal") || name.includes("nature valley"))
-    return LOCATION_IMAGES.kandhamal;
-  if (name.includes("waterfall") || name.includes("duduma") || name.includes("demo"))
-    return LOCATION_IMAGES.waterfall;
+  if (name.includes("kandhamal") || name.includes("nature valley")) return LOCATION_IMAGES.kandhamal;
+  if (name.includes("waterfall") || name.includes("duduma") || name.includes("demo")) return LOCATION_IMAGES.waterfall;
 
   return LOCATION_IMAGES.defaultHill;
 }
@@ -88,7 +93,6 @@ function Home() {
     >
       <div className="home-overlay"></div>
 
-      {/* NAVBAR */}
       <nav className="navbar home-navbar">
         <div className="logo home-logo">
           <MapPin size={28} />
@@ -101,7 +105,6 @@ function Home() {
         </div>
       </nav>
 
-      {/* HERO */}
       <main className="home-content">
         <div className="hero-badge">
           <ShieldCheck size={18} />
@@ -118,7 +121,6 @@ function Home() {
         </p>
 
         <div className="login-options">
-          {/* PUBLIC */}
           <Link to="/public-login" className="login-card">
             <div className="icon-box public-icon">
               <Users size={29} />
@@ -132,7 +134,6 @@ function Home() {
             <ArrowRight className="arrow" />
           </Link>
 
-          {/* GOVERNMENT */}
           <Link to="/government-login" className="login-card">
             <div className="icon-box government-icon">
               <ShieldCheck size={29} />
@@ -148,7 +149,6 @@ function Home() {
         </div>
       </main>
 
-      {/* ABOUT */}
       <section className="about-section" id="about">
         <div className="about-container">
           <div className="about-text">
@@ -180,7 +180,6 @@ function Home() {
         </div>
       </section>
 
-      {/* MISSION */}
       <section className="mission-section" id="mission">
         <div className="mission-container">
           <div className="mission-heading">
@@ -235,7 +234,6 @@ function Home() {
         </div>
       </section>
 
-      {/* FOOTER */}
       <footer className="footer">
         <div className="footer-container">
           <div className="footer-brand">
@@ -479,13 +477,11 @@ function PublicDashboard() {
     description: "",
     latitude: "",
     longitude: "",
-    image_url: "",
-    
   });
 
   const [placeSubmitting, setPlaceSubmitting] = useState(false);
   const [videoFile, setVideoFile] = useState(null);
-  const [videoUploading, setVideoUploading] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
   const [placeMessage, setPlaceMessage] = useState("");
   const [placeError, setPlaceError] = useState("");
 
@@ -627,6 +623,7 @@ function PublicDashboard() {
 
   const handlePlaceSubmit = async (event) => {
     event.preventDefault();
+
     setPlaceMessage("");
     setPlaceError("");
 
@@ -651,57 +648,48 @@ function PublicDashboard() {
 
     try {
       setPlaceSubmitting(true);
-      let uploadedVideoUrl = "";
 
-      if (videoFile) {
-        setVideoUploading(true);
+      let uploadedImageUrl = "";
 
-        const videoData = new FormData();
-        videoData.append("video", videoFile);
+      if (imageFile) {
+        const imageData = new FormData();
+        imageData.append("image", imageFile);
 
-        const videoResponse = await fetch(
-          `${API_URL}/upload-video`,
-          {
-            method: "POST",
-            body: videoData,
-          }
-        );
+        const imageResponse = await fetch(`${API_URL}/upload-image`, {
+          method: "POST",
+          body: imageData,
+        });
 
-        const videoResult = await videoResponse.json();
+        const imageResult = await imageResponse.json();
 
-        if (!videoResponse.ok) {
-          throw new Error(
-            videoResult.detail || "Video upload failed."
-          );
+        if (!imageResponse.ok) {
+          throw new Error(imageResult.detail || "Image upload failed.");
         }
 
-        uploadedVideoUrl = videoResult.video_url;
-
-        setVideoUploading(false);
+        uploadedImageUrl = imageResult.image_url;
       }
 
-      const params = new URLSearchParams({
-        user_id: userId,
-        name: placeForm.name.trim(),
-        state: placeForm.state.trim(),
-        district: placeForm.district.trim(),
-        description: placeForm.description.trim(),
-        latitude: placeForm.latitude,
-        longitude: placeForm.longitude,
+      const formData = new FormData();
+      formData.append("user_id", userId);
+      formData.append("name", placeForm.name.trim());
+      formData.append("state", placeForm.state.trim());
+      formData.append("district", placeForm.district.trim());
+      formData.append("description", placeForm.description.trim());
+      formData.append("latitude", placeForm.latitude);
+      formData.append("longitude", placeForm.longitude);
+
+      if (uploadedImageUrl) {
+        formData.append("image_url", uploadedImageUrl);
+      }
+
+      if (videoFile) {
+        formData.append("video", videoFile);
+      }
+
+      const response = await fetch(`${API_URL}/places/submit`, {
+        method: "POST",
+        body: formData,
       });
-
-      if (placeForm.image_url.trim()) {
-        params.append("image_url", placeForm.image_url.trim());
-      }
-      if (uploadedVideoUrl) {
-        params.append("video_url", uploadedVideoUrl);
-      }
-
-
-      const response = await fetch(
-        `${API_URL}/places/submit?${params.toString()}`,
-        { method: "POST" }
-      );
 
       const data = await response.json();
 
@@ -720,9 +708,10 @@ function PublicDashboard() {
         description: "",
         latitude: "",
         longitude: "",
-        image_url: "",
-        video_url: "",
       });
+
+      setImageFile(null);
+      setVideoFile(null);
     } catch (err) {
       console.error(err);
       setPlaceError(
@@ -739,10 +728,9 @@ function PublicDashboard() {
 
     return (
       <article
-        className={`destination-card ${isPopular
-          ? "popular-destination-card"
-          : "hidden-destination-card"
-          }`}
+        className={`destination-card ${
+          isPopular ? "popular-destination-card" : "hidden-destination-card"
+        }`}
         key={
           destination?.id ??
           `${destination?.name}-${destination?.district}`
@@ -794,7 +782,6 @@ function PublicDashboard() {
     >
       <div className="explore-page-overlay"></div>
 
-      {/* NAVBAR */}
       <nav className="navbar explore-navbar">
         <div className="logo explore-logo">
           <MapPin size={28} />
@@ -814,17 +801,12 @@ function PublicDashboard() {
       </nav>
 
       <main className="explore-content dashboard-content">
-        {/* HERO */}
         <section className="explore-header">
-          <span className="section-tag explore-eyebrow">
-            EXPLORE INDIA
-          </span>
-
+          <span className="section-tag explore-eyebrow">EXPLORE INDIA</span>
           <h1>
             Discover
             <span> Hidden Horizons</span>
           </h1>
-
           <p>
             Explore iconic destinations, discover hidden places and travel
             beyond the usual routes.
@@ -1065,25 +1047,41 @@ function PublicDashboard() {
                 />
               </div>
 
-              {/* IMAGE INSERTION PLACE */}
+              {/* IMAGE INPUT */}
               <div className="hidden-form-group full">
                 <label>
-                  <ImageIcon size={15} style={{ display: "inline", verticalAlign: "middle", marginRight: "6px" }} />
-                  Public Dashboard Background Image (Image URL)
+                  <ImageIcon
+                    size={15}
+                    style={{
+                      display: "inline",
+                      verticalAlign: "middle",
+                      marginRight: "6px",
+                    }}
+                  />
+                  Destination Image
                 </label>
+
                 <input
-                  type="url"
-                  placeholder="Enter direct image URL (e.g. https://images.unsplash.com/...)"
-                  value={placeForm.image_url}
-                  onChange={(e) =>
-                    setPlaceForm({ ...placeForm, image_url: e.target.value })
-                  }
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    setImageFile(file);
+                  }}
                 />
+
                 <span className="form-hint">
-                  This image will be used as the background card preview on the public dashboard once approved.
+                  Select a destination image directly from your gallery. JPG, PNG and WebP are supported.
                 </span>
+
+                {imageFile && (
+                  <span className="form-hint">
+                    Selected: {imageFile.name}
+                  </span>
+                )}
               </div>
-              {/* VIDEO INSERTION PLACE */}
+
+              {/* VIDEO INPUT */}
               <div className="hidden-form-group full">
                 <label>Destination Video</label>
 
@@ -1106,7 +1104,6 @@ function PublicDashboard() {
                   </span>
                 )}
               </div>
-
 
               {placeError && (
                 <div className="hidden-place-error">{placeError}</div>
@@ -1147,7 +1144,6 @@ function DestinationDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Review Form States
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewHoverRating, setReviewHoverRating] = useState(0);
   const [reviewFeedback, setReviewFeedback] = useState("");
@@ -1300,7 +1296,6 @@ function DestinationDetails() {
     >
       <div className="destination-page-overlay"></div>
 
-      {/* NAVBAR */}
       <nav className="destination-navbar">
         <div className="logo white-logo">
           <MapPin size={28} />
@@ -1309,7 +1304,6 @@ function DestinationDetails() {
       </nav>
 
       <main className="destination-main">
-        {/* BACK BUTTON */}
         <div className="destination-nav-wrapper">
           <button
             className="destination-back"
@@ -1319,23 +1313,18 @@ function DestinationDetails() {
           </button>
         </div>
 
-        {/* HEADER */}
         <section className="destination-header">
           <span className="destination-tag">HIDDEN DESTINATION</span>
-
           <h1>{destination.name}</h1>
-
           <p className="destination-location">
             📍 {destination.district}, {destination.state}
           </p>
-
           <p className="destination-description">
             {destination.description ||
               "Discover this beautiful destination and explore what makes it special."}
           </p>
         </section>
 
-                {/* DESTINATION VIDEO */}
         {destination.video_url && (
           <section className="details-section destination-video-section">
             <div className="details-section-heading">
@@ -1355,7 +1344,6 @@ function DestinationDetails() {
           </section>
         )}
 
-        {/* STATS */}
         <div className="destination-stats">
           <div className="stat-card">
             <h3>Reviews</h3>
@@ -1373,14 +1361,13 @@ function DestinationDetails() {
           </div>
         </div>
 
-        {/* REVIEWS SECTION */}
+        {/* REVIEWS */}
         <section className="details-section">
           <div className="details-section-heading">
             <span>TRAVEL EXPERIENCES</span>
             <h2>Reviews & Feedback</h2>
           </div>
 
-          {/* LEAVE A REVIEW FORM */}
           <div className="review-submission-box">
             <h3>Share Your Experience</h3>
             <p>Visited {destination.name}? Help other travelers with your thoughts.</p>
@@ -1393,13 +1380,21 @@ function DestinationDetails() {
                     <button
                       type="button"
                       key={star}
-                      className={`star-btn ${(reviewHoverRating || reviewRating) >= star ? "filled" : ""
-                        }`}
+                      className={`star-btn ${
+                        (reviewHoverRating || reviewRating) >= star ? "filled" : ""
+                      }`}
                       onClick={() => setReviewRating(star)}
                       onMouseEnter={() => setReviewHoverRating(star)}
                       onMouseLeave={() => setReviewHoverRating(0)}
                     >
-                      <Star size={24} fill={(reviewHoverRating || reviewRating) >= star ? "#fde047" : "none"} />
+                      <Star
+                        size={24}
+                        fill={
+                          (reviewHoverRating || reviewRating) >= star
+                            ? "#fde047"
+                            : "none"
+                        }
+                      />
                     </button>
                   ))}
                   <span className="rating-score">{reviewRating} / 5</span>
@@ -1428,20 +1423,15 @@ function DestinationDetails() {
             </form>
           </div>
 
-          {/* DISPLAY REVIEWS */}
           {reviews.length === 0 ? (
             <div className="review-empty">No reviews yet. Be the first to review!</div>
           ) : (
             <div className="reviews-grid">
               {reviews.map((review) => (
                 <article className="review-card" key={review.id}>
-                  <div className="review-rating">
-                    ⭐ {review.rating ?? 0}/5
-                  </div>
+                  <div className="review-rating">⭐ {review.rating ?? 0}/5</div>
                   <p className="review-feedback">
-                    {String(
-                      review.feedback || "No written feedback provided."
-                    )}
+                    {String(review.feedback || "No written feedback provided.")}
                   </p>
                 </article>
               ))}
@@ -1449,7 +1439,7 @@ function DestinationDetails() {
           )}
         </section>
 
-        {/* STAYS SECTION */}
+        {/* NEARBY STAYS */}
         <section className="details-section stays-section">
           <div className="details-section-heading">
             <span>STAY NEARBY</span>
