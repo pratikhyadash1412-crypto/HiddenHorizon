@@ -283,14 +283,19 @@
 
 .government-review-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 20px;
-  padding: 22px 26px;
+  gap: 24px;
+  padding: 24px 28px;
   border-radius: 18px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   box-shadow: 0 8px 25px rgba(15, 23, 42, 0.04);
+}
+
+.government-card-content {
+  flex: 1;
+  width: 100%;
 }
 
 .submission-status {
@@ -310,13 +315,32 @@
   margin-bottom: 4px;
 }
 
+/* DARK GREEN LOCATION COLOR */
 .submission-location {
   display: flex;
   align-items: center;
   gap: 5px;
   font-size: 13px;
-  color: #64748b;
+  color: #065f46;
+  font-weight: 600;
   margin-bottom: 6px;
+}
+
+.submission-location svg {
+  stroke: #065f46;
+}
+
+.destination-location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #065f46;
+  font-weight: 600;
+}
+
+.destination-location svg {
+  stroke: #065f46;
 }
 
 .submission-description {
@@ -328,6 +352,7 @@
   display: flex;
   gap: 10px;
   flex-shrink: 0;
+  margin-top: 10px;
 }
 
 .approve-button {
@@ -337,6 +362,7 @@
   border-radius: 999px;
   font-size: 12.5px;
   font-weight: 700;
+  border: none;
   box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
   cursor: pointer;
 }
@@ -422,7 +448,7 @@
 .score-bar-item div:first-child {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: 11px;
   color: #64748b;
   margin-bottom: 4px;
 }
@@ -540,7 +566,7 @@
 }
 
 .simulation-field { flex: 1; }
-.simulation-field label { display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px; }
+.simulation-field label { display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 6px; }
 .simulation-field select {
   width: 100%;
   padding: 12px 14px;
@@ -562,7 +588,7 @@
   display: flex;
   justify-content: space-between;
   margin-bottom: 8px;
-  font-size: 13px;
+  font-size: 11.5px;
   color: #334155;
 }
 
@@ -595,6 +621,7 @@
   color: #ffffff;
   font-size: 14px;
   font-weight: 800;
+  border: none;
   box-shadow: 0 8px 25px rgba(16, 185, 129, 0.25);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -667,8 +694,65 @@
   line-height: 1.6;
 }
 
+/* FULL-WIDTH WHITE GUIDELINES TEXTAREA WITH COMPACT LABELS */
+.guidelines-field {
+  margin-top: 16px;
+  width: 100%;
+}
+
+.guidelines-field label,
+.guidelines-field small {
+  display: block;
+}
+
+.guidelines-field label {
+  margin-bottom: 6px;
+  color: #065f46;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.guidelines-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 96px;
+  padding: 12px 14px;
+  resize: vertical;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1.5px solid #d1fae5;
+  border-radius: 12px;
+  outline: none;
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1.5;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.guidelines-field textarea::placeholder {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.guidelines-field textarea:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.guidelines-field small {
+  margin-top: 6px;
+  color: #64748b;
+  font-size: 10.5px;
+}
+
 @media (max-width: 850px) {
-  .government-stats, .destination-score-grid, .analytics-summary-grid, .simulation-controls, .visitor-change-grid {
+  .government-stats,
+  .destination-score-grid,
+  .analytics-summary-grid,
+  .simulation-controls,
+  .visitor-change-grid {
     grid-template-columns: 1fr;
   }
   .government-review-card {
@@ -678,7 +762,8 @@
   .government-actions {
     width: 100%;
   }
-  .approve-button, .reject-button {
+  .approve-button,
+  .reject-button {
     flex: 1;
   }
 }

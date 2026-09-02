@@ -57,6 +57,20 @@ function getLocationImage(destination) {
   return WATERFALL_HERO_BG;
 }
 
+function getMapEmbedUrl(latitude, longitude) {
+  if (latitude === null || latitude === undefined || latitude === "" ||
+      longitude === null || longitude === undefined || longitude === "") return null;
+  const lat = Number(latitude);
+  const lng = Number(longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+  const padding = 0.035;
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${lng - padding}%2C${lat - padding}%2C${lng + padding}%2C${lat + padding}&layer=mapnik&marker=${lat}%2C${lng}`;
+}
+
+function getDirectionsUrl(latitude, longitude) {
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${latitude},${longitude}`)}`;
+}
+
 // =====================================================
 // HOME PAGE COMPONENT (WATERFALL HERO + SOLID CRISP SECTIONS)
 // =====================================================
@@ -818,6 +832,8 @@ function DestinationDetails() {
     );
   }
 
+  const mapEmbedUrl = getMapEmbedUrl(destination.latitude, destination.longitude);
+
   return (
     <div className="destination-details fun-destination-details light-details-page">
       {/* FRESH LIGHT TRAVEL OVERLAY */}
@@ -867,6 +883,40 @@ function DestinationDetails() {
             >
               Your browser does not support video playback.
             </video>
+          </section>
+        )}
+
+        {mapEmbedUrl && (
+          <section className="details-section fun-details-card light-details-card destination-map-section">
+            <div className="details-section-heading">
+              <span className="section-tag-mini">LOCATION & DIRECTIONS</span>
+              <h2>Destination Map</h2>
+            </div>
+            <div className="destination-map-card">
+              <iframe
+                title={`Map of ${destination.name}`}
+                src={mapEmbedUrl}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+              <div className="map-card-footer">
+                <span><MapPin size={15} /> {Number(destination.latitude).toFixed(5)}, {Number(destination.longitude).toFixed(5)}</span>
+                <a href={getDirectionsUrl(destination.latitude, destination.longitude)} target="_blank" rel="noreferrer">Get directions ↗</a>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {destination.guidelines && (
+          <section className="details-section fun-details-card light-details-card guidelines-section">
+            <div className="details-section-heading">
+              <span className="section-tag-mini">OFFICIAL VISITOR INFORMATION</span>
+              <h2>Government Guidelines</h2>
+            </div>
+            <div className="guidelines-card">
+              <span className="guidelines-icon">✓</span>
+              <p>{destination.guidelines}</p>
+            </div>
           </section>
         )}
 

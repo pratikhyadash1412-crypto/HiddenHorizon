@@ -19,7 +19,6 @@ import BestDestination from "./BestDestination";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
-// EXACT CATALOG FROM YOUR PUBLIC DASHBOARD (MATCHING YOUR EXACT DATABASE)
 const BASELINE_POPULAR = [
   { id: 1, name: "Deomali Trail", district: "Koraput", state: "Odisha", destination_type: "famous", vulnerability_score: 52, footfall_score: 58, water_score: 45, waste_score: 50, pollution_score: 38, category: "MODERATE PRESSURE" },
   { id: 2, name: "Mahendragiri Zone", district: "Gajapati", state: "Odisha", destination_type: "famous", vulnerability_score: 46, footfall_score: 48, water_score: 40, waste_score: 44, pollution_score: 32, category: "MODERATE PRESSURE" },
@@ -44,15 +43,16 @@ export default function GovernmentDashboard() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  // Independent state dictionary for the typed guidelines
+  const [approvalGuidelines, setApprovalGuidelines] = useState({});
+
   const [analytics, setAnalytics] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
 
-  // DYNAMICALLY SYNCHRONIZED DESTINATIONS FROM DATABASE
   const [allDestinations, setAllDestinations] = useState([]);
   const [famousDestinations, setFamousDestinations] = useState([]);
   const [hiddenDestinations, setHiddenDestinations] = useState([]);
 
-  // SIMULATION STATE
   const [famousDestinationId, setFamousDestinationId] = useState("");
   const [hiddenDestinationId, setHiddenDestinationId] = useState("");
   const [shiftPercentage, setShiftPercentage] = useState(15);
@@ -67,7 +67,6 @@ export default function GovernmentDashboard() {
     navigate("/");
   };
 
-  // SAME IDENTICAL CLASSIFICATION AS PUBLIC DASHBOARD
   const isPopularLocation = (destination) => {
     const name = String(destination?.name || "").toLowerCase().trim();
     return (
@@ -87,34 +86,101 @@ export default function GovernmentDashboard() {
       setLoading(true);
       setError("");
 
-      const [submissionsRes, analyticsRes, publicDestsRes] = await Promise.all([
-        fetch(`${API_URL}/government/place-submissions?_=${Date.now()}`),
-        fetch(`${API_URL}/government/analytics?_=${Date.now()}`),
-        fetch(`${API_URL}/destinations/Odisha?_=${Date.now()}`),
-      ]);
+      const loadPendingPlaces = async () => {
+        const cacheKey = `?_=${Date.now()}`;
 
-      const subData = submissionsRes.ok ? await submissionsRes.json() : [];
-      const anaData = analyticsRes.ok ? await analyticsRes.json() : null;
-      const pubData = publicDestsRes.ok ? await publicDestsRes.json() : [];
+        let response = await fetch(
+          `${API_URL}/government/pending-places${cacheKey}`
+        );
 
-      setSubmissions(Array.isArray(subData) ? subData : []);
+        if (response.status === 404) {
+          response = await fetch(
+            `${API_URL}/government/place-submissions${cacheKey}`
+          );
+        }
+
+        if (response.status === 404) {
+          response = await fetch(
+            `${API_URL}/places/pending${cacheKey}`
+          );
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            "Unable to load the pending place-approval queue. Start the backend and try again."
+          );
+        }
+
+        return response.json();
+      };
+
+      const [queueResult, analyticsResult, destinationsResult] =
+        await Promise.allSettled([
+          loadPendingPlaces(),
+          fetch(`${API_URL}/government/analytics?_=${Date.now()}`).then(
+            (response) => (response.ok ? response.json() : null)
+          ),
+          fetch(`${API_URL}/destinations/Odisha?_=${Date.now()}`).then(
+            (response) => (response.ok ? response.json() : [])
+          ),
+        ]);
+
+      if (queueResult.status !== "fulfilled") {
+        throw queueResult.reason;
+      }
+
+      const subData = queueResult.value;
+      const anaData =
+        analyticsResult.status === "fulfilled"
+          ? analyticsResult.value
+          : null;
+      const pubData =
+        destinationsResult.status === "fulfilled"
+          ? destinationsResult.value
+          : [];
+
+      const list = Array.isArray(subData) ? subData : [];
+      setSubmissions(list);
       setAnalytics(anaData);
 
-      let fetchedList = Array.isArray(pubData) && pubData.length > 0 ? pubData : [];
+      // Only seed empty string if key is not yet set by user typing
+      setApprovalGuidelines((prev) => {
+        const updated = { ...prev };
+        list.forEach((item) => {
+          if (updated[item.id] === undefined) {
+            updated[item.id] = item.guidelines || "";
+          }
+        });
+        return updated;
+      });
+
+      const fetchedList =
+        Array.isArray(pubData) && pubData.length > 0 ? pubData : [];
 
       if (fetchedList.length > 0) {
-        // Classify dynamically from backend
         const popularList = fetchedList
           .filter(isPopularLocation)
           .map((d, idx) => ({
             ...d,
             id: d.id || idx + 1,
-            vulnerability_score: d.vulnerability_score || (String(d.name).toLowerCase().includes("puri") ? 88 : 55),
-            footfall_score: d.footfall_score || (String(d.name).toLowerCase().includes("puri") ? 92 : 60),
-            water_score: d.water_score || (String(d.name).toLowerCase().includes("puri") ? 84 : 45),
-            waste_score: d.waste_score || (String(d.name).toLowerCase().includes("puri") ? 89 : 50),
-            pollution_score: d.pollution_score || (String(d.name).toLowerCase().includes("puri") ? 82 : 38),
-            category: String(d.name).toLowerCase().includes("puri") ? "HIGH PRESSURE" : "MODERATE PRESSURE",
+            vulnerability_score:
+              d.vulnerability_score ||
+              (String(d.name).toLowerCase().includes("puri") ? 88 : 55),
+            footfall_score:
+              d.footfall_score ||
+              (String(d.name).toLowerCase().includes("puri") ? 92 : 60),
+            water_score:
+              d.water_score ||
+              (String(d.name).toLowerCase().includes("puri") ? 84 : 45),
+            waste_score:
+              d.waste_score ||
+              (String(d.name).toLowerCase().includes("puri") ? 89 : 50),
+            pollution_score:
+              d.pollution_score ||
+              (String(d.name).toLowerCase().includes("puri") ? 82 : 38),
+            category: String(d.name).toLowerCase().includes("puri")
+              ? "HIGH PRESSURE"
+              : "MODERATE PRESSURE",
           }));
 
         const hiddenList = fetchedList
@@ -130,8 +196,12 @@ export default function GovernmentDashboard() {
             category: "LOW PRESSURE",
           }));
 
-        setFamousDestinations(popularList.length > 0 ? popularList : BASELINE_POPULAR);
-        setHiddenDestinations(hiddenList.length > 0 ? hiddenList : BASELINE_HIDDEN);
+        setFamousDestinations(
+          popularList.length > 0 ? popularList : BASELINE_POPULAR
+        );
+        setHiddenDestinations(
+          hiddenList.length > 0 ? hiddenList : BASELINE_HIDDEN
+        );
         setAllDestinations([...popularList, ...hiddenList]);
       } else {
         setFamousDestinations(BASELINE_POPULAR);
@@ -140,6 +210,8 @@ export default function GovernmentDashboard() {
       }
     } catch (err) {
       console.error("Government Data Load Error:", err);
+      setError(err.message || "Unable to load the government dashboard data.");
+      setSubmissions([]);
       setFamousDestinations(BASELINE_POPULAR);
       setHiddenDestinations(BASELINE_HIDDEN);
       setAllDestinations([...BASELINE_POPULAR, ...BASELINE_HIDDEN]);
@@ -152,6 +224,13 @@ export default function GovernmentDashboard() {
   useEffect(() => {
     fetchGovernmentData();
   }, []);
+
+  const handleGuidelineChange = (id, value) => {
+    setApprovalGuidelines((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+  };
 
   const runSimulation = async () => {
     setSimulationError("");
@@ -187,7 +266,6 @@ export default function GovernmentDashboard() {
       setAiRefreshKey((prev) => prev + 1);
     } catch (err) {
       console.error(err);
-      // Client-side instant calculation fallback using selected names
       const originObj = famousDestinations.find((d) => String(d.id) === String(famousDestinationId));
       const targetObj = hiddenDestinations.find((d) => String(d.id) === String(hiddenDestinationId));
 
@@ -213,19 +291,40 @@ export default function GovernmentDashboard() {
   };
 
   const handlePlaceAction = async (submissionId, action) => {
+    const officialGuidelines = (approvalGuidelines[submissionId] || "").trim();
+
     try {
       setActionLoading(`place-${submissionId}-${action}`);
       setError("");
       setSuccess("");
 
-      const response = await fetch(`${API_URL}/government/place/${submissionId}/${action}`, {
+      const formData = new FormData();
+      if (action === "approve") formData.append("guidelines", officialGuidelines);
+
+      let response = await fetch(`${API_URL}/government/place/${submissionId}/${action}`, {
         method: "PUT",
+        body: formData,
       });
 
-      const data = await response.json();
+      if (response.status === 404 || response.status === 405) {
+        response = await fetch(`${API_URL}/places/${submissionId}/${action}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: action === "approve" ? "APPROVED" : "REJECTED",
+            guidelines: officialGuidelines,
+          }),
+        });
+      }
+
+      const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.detail || `Failed to ${action} place.`);
 
-      setSuccess(action === "approve" ? "Place verified and added to Public Explorer." : "Place rejected.");
+      setSuccess(
+        action === "approve"
+          ? "Place verified, added to Public Explorer, and visitor guidelines saved."
+          : "Place rejected."
+      );
       await fetchGovernmentData();
     } catch (err) {
       console.error(err);
@@ -252,7 +351,6 @@ export default function GovernmentDashboard() {
 
   return (
     <div className="gov-dashboard">
-      {/* OFFICIAL GOV RIBBON */}
       <div className="gov-top-ribbon">
         <div className="gov-ribbon-left">
           <div className="flag-strip"><span></span><span></span><span></span></div>
@@ -264,7 +362,6 @@ export default function GovernmentDashboard() {
         </div>
       </div>
 
-      {/* NAVBAR */}
       <nav className="government-navbar">
         <div className="logo" onClick={() => navigate("/")}>
           <ShieldCheck size={26} color="#10b981" />
@@ -282,7 +379,6 @@ export default function GovernmentDashboard() {
       </nav>
 
       <main className="government-main">
-        {/* HEADER */}
         <header className="gov-header animate-fade-in">
           <span className="gov-eyebrow">DECISION SUPPORT SYSTEM (SDSS)</span>
           <h1>Sustainable Tourism Carrying Capacity & Policy Control</h1>
@@ -292,11 +388,9 @@ export default function GovernmentDashboard() {
           </p>
         </header>
 
-        {/* ALERTS */}
         {error && <div className="gov-error">⚠️ {error}</div>}
         {success && <div className="gov-success">✓ {success}</div>}
 
-        {/* OVERVIEW METRIC CARDS */}
         <section className="government-stats animate-slide-up">
           <div className="gov-stat-card">
             <span className="stat-label">MONITORED DESTINATIONS</span>
@@ -317,7 +411,6 @@ export default function GovernmentDashboard() {
           </div>
         </section>
 
-        {/* PENDING SUBMISSIONS */}
         <section className="government-section">
           <div className="government-section-heading">
             <span className="gov-tag">COMMUNITY VERIFICATION QUEUE</span>
@@ -333,42 +426,58 @@ export default function GovernmentDashboard() {
             </div>
           ) : (
             <div className="government-list">
-              {submissions.map((sub) => (
-                <article className="government-review-card" key={sub.id}>
-                  <div className="government-card-content">
-                    <span className="submission-status">{sub.verification_status || "PENDING"}</span>
-                    <h3>{sub.name}</h3>
-                    <p className="submission-location">
-                      <MapPin size={14} />
-                      {sub.district ? `${sub.district}, ` : ""}
-                      {sub.state}
-                    </p>
-                    {sub.description && <p className="submission-description">{sub.description}</p>}
-                  </div>
+              {submissions.map((sub) => {
+                return (
+                  <article className="government-review-card" key={sub.id}>
+                    <div className="government-card-content">
+                      <span className="submission-status">{sub.verification_status || "PENDING"}</span>
+                      <h3>{sub.name}</h3>
+                      <p className="submission-location">
+                        <MapPin size={14} />
+                        {sub.district ? `${sub.district}, ` : ""}
+                        {sub.state}
+                      </p>
+                      {sub.description && <p className="submission-description">{sub.description}</p>}
 
-                  <div className="government-actions">
-                    <button
-                      className="approve-button"
-                      disabled={actionLoading !== null}
-                      onClick={() => handlePlaceAction(sub.id, "approve")}
-                    >
-                      {actionLoading === `place-${sub.id}-approve` ? "Approving..." : "✓ Approve for Public"}
-                    </button>
-                    <button
-                      className="reject-button"
-                      disabled={actionLoading !== null}
-                      onClick={() => handlePlaceAction(sub.id, "reject")}
-                    >
-                      {actionLoading === `place-${sub.id}-reject` ? "Rejecting..." : "✕ Reject"}
-                    </button>
-                  </div>
-                </article>
-              ))}
+                      {/* FULLY EDITABLE TEXTAREA */}
+                      <div className="guidelines-field">
+                        <label htmlFor={`guidelines-${sub.id}`}>Visitor guidelines for this destination</label>
+                        <textarea
+                          id={`guidelines-${sub.id}`}
+                          rows="4"
+                          value={approvalGuidelines[sub.id] ?? ""}
+                          onChange={(e) => handleGuidelineChange(sub.id, e.target.value)}
+                          placeholder="Example: Carry back waste, respect local customs, avoid restricted trails, and follow entry timings."
+                        />
+                        <small>Shown on the public destination page after approval.</small>
+                      </div>
+                    </div>
+
+                    <div className="government-actions">
+                      <button
+                        type="button"
+                        className="approve-button"
+                        disabled={actionLoading !== null}
+                        onClick={() => handlePlaceAction(sub.id, "approve")}
+                      >
+                        {actionLoading === `place-${sub.id}-approve` ? "Approving..." : "✓ Approve for Public"}
+                      </button>
+                      <button
+                        type="button"
+                        className="reject-button"
+                        disabled={actionLoading !== null}
+                        onClick={() => handlePlaceAction(sub.id, "reject")}
+                      >
+                        {actionLoading === `place-${sub.id}-reject` ? "Rejecting..." : "✕ Reject"}
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
 
-        {/* TOURISM INTELLIGENCE */}
         <section className="government-section">
           <div className="government-section-heading">
             <span className="gov-tag">SPATIAL ANALYTICS</span>
@@ -430,7 +539,6 @@ export default function GovernmentDashboard() {
           </div>
         </section>
 
-        {/* TOURISM PRESSURE INDEX (ALL EXACT DESTINATIONS) */}
         <section className="government-section">
           <div className="government-section-heading">
             <span className="gov-tag">DESTINATION CARRYING CAPACITY</span>
@@ -491,9 +599,6 @@ export default function GovernmentDashboard() {
           </div>
         </section>
 
-        {/* =====================================================
-            ⭐ DYNAMIC POLICY SIMULATION (EXACT DESTINATIONS) ⭐
-        ===================================================== */}
         <section className="government-section">
           <div className="government-section-heading">
             <span className="gov-tag">POLICY OPTIMIZATION ENGINE</span>
@@ -507,7 +612,6 @@ export default function GovernmentDashboard() {
             </div>
 
             <div className="simulation-controls">
-              {/* DYNAMIC ORIGIN */}
               <div className="simulation-field">
                 <label>Origin Hub (Overcrowded / Monitored)</label>
                 <select
@@ -525,7 +629,6 @@ export default function GovernmentDashboard() {
 
               <div className="simulation-arrow">➔</div>
 
-              {/* DYNAMIC TARGET */}
               <div className="simulation-field">
                 <label>Target Corridor (Recipient Eco-Gem)</label>
                 <select
@@ -608,7 +711,6 @@ export default function GovernmentDashboard() {
           </div>
         </section>
 
-        {/* SUBCOMPONENTS */}
         <AIAnalysis refreshKey={aiRefreshKey} />
         <DestinationRecommendations refreshKey={aiRefreshKey} />
         <BestDestination refreshKey={aiRefreshKey} />

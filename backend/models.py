@@ -56,6 +56,8 @@ class Destination(Base):
 
     # Government approval
     approved = Column(Boolean, default=False)
+    # Rules provided by the approving authority for public visitors.
+    guidelines = Column(Text, nullable=True)
 
     current_footfall = Column(Integer, default=0)
 

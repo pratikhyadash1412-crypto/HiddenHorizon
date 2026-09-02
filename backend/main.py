@@ -7,6 +7,7 @@ from fastapi import FastAPI, Depends, HTTPException, Form, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
+from sqlalchemy import inspect, text, func
 
 from database import engine, Base, get_db
 import models
@@ -39,14 +40,41 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://localhost:5174",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
     ],
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1):[0-9]+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 Base.metadata.create_all(bind=engine)
+
+# Add this field for existing databases too; create_all only affects new tables.
+def ensure_destination_guidelines_column():
+    column_names = {column["name"] for column in inspect(engine).get_columns("destinations")}
+    if "guidelines" not in column_names:
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE destinations ADD COLUMN guidelines TEXT NULL"))
+
+
+ensure_destination_guidelines_column()
 app.include_router(reviews_router)
+
+
+@app.get("/government/pending-places")
+def get_pending_places_for_government(db: Session = Depends(get_db)):
+    """Dedicated queue endpoint, kept separate from legacy duplicated routes."""
+    return (
+        db.query(models.PlaceSubmission)
+        .filter(
+            func.upper(func.trim(models.PlaceSubmission.verification_status))
+            == "PENDING"
+        )
+        .order_by(models.PlaceSubmission.id.desc())
+        .all()
+    )
 
 # ---------------------------------------------------------
 # LATEST REDISTRIBUTION SCENARIO
@@ -418,6 +446,7 @@ def get_place_submissions(
 @app.put("/government/place/{submission_id}/approve")
 def approve_place(
     submission_id: int,
+    guidelines: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
     submission = (
@@ -444,7 +473,8 @@ def approve_place(
         image_url=submission.image_url,
         video_url=submission.video_url,
         destination_type="hidden",
-        approved=True
+        approved=True,
+        guidelines=guidelines.strip() if guidelines and guidelines.strip() else None,
     )
 
     db.add(destination)
@@ -452,7 +482,8 @@ def approve_place(
 
     return {
         "message": "Place approved successfully",
-        "place": submission.name
+        "place": submission.name,
+        "guidelines": destination.guidelines,
     }
 
 
@@ -1186,6 +1217,7 @@ def get_place_submissions(
 @app.put("/government/place/{submission_id}/approve")
 def approve_place(
     submission_id: int,
+    guidelines: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
     submission = (
@@ -1212,7 +1244,8 @@ def approve_place(
         image_url=submission.image_url,
         video_url=submission.video_url,
         destination_type="hidden",
-        approved=True
+        approved=True,
+        guidelines=guidelines.strip() if guidelines and guidelines.strip() else None,
     )
 
     db.add(destination)
@@ -1220,8 +1253,32 @@ def approve_place(
 
     return {
         "message": "Place approved successfully",
-        "place": submission.name
+        "place": submission.name,
+        "guidelines": destination.guidelines,
     }
+
+
+@app.put("/government/destination/{destination_id}/guidelines")
+def update_destination_guidelines(
+    destination_id: int,
+    guidelines: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+):
+    destination = (
+        db.query(models.Destination)
+        .filter(
+            models.Destination.id == destination_id,
+            models.Destination.approved == True,
+        )
+        .first()
+    )
+    if not destination:
+        raise HTTPException(status_code=404, detail="Approved destination not found")
+
+    destination.guidelines = guidelines.strip() if guidelines and guidelines.strip() else None
+    db.commit()
+    db.refresh(destination)
+    return {"message": "Destination guidelines updated successfully", "guidelines": destination.guidelines}
 
 
 # =========================

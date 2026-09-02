@@ -66,6 +66,7 @@ class DestinationBase(BaseModel):
     destination_type: str  # e.g., hidden, popular
     image_url: Optional[str] = Field(None, description="Custom background image URL")
     approved: bool = False
+    guidelines: Optional[str] = None
 
 
 class DestinationResponse(BaseConfig, DestinationBase):
