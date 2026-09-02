@@ -1,190 +1,194 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+/* =====================================================
+   BEST DESTINATION MODULE (CRISP LIGHT EXECUTIVE THEME)
+===================================================== */
+:root {
+  --gov-navy: #0f172a;
+  --gov-surface: #f8fafd;
+  --gov-card: #ffffff;
+  --gov-border: rgba(15, 23, 42, 0.08);
+  --eco-emerald: #10b981;
+  --eco-teal: #06b6d4;
+  --heritage-gold: #f59e0b;
+  --alert-crimson: #ef4444;
+  --accent-cyan: #0284c7;
+  --bg-card: #ffffff;
+  --glass-border: #e2e8f0;
+  --text-pure: #0f172a;
+  --text-muted: #64748b;
+  --text-sub: #94a3b8;
+}
+
 .best-destination-section {
-  width: min(1200px, 92%);
-  margin: 80px auto;
+  width: 100%;
+  margin: 50px 0;
+  color: var(--text-pure);
+  font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 .best-destination-heading {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 
 .best-destination-heading h2 {
-  font-size: 42px;
-  margin: 18px 0 12px;
+  font-family: 'Cinzel', serif;
+  font-size: clamp(26px, 3.5vw, 36px);
+  margin-bottom: 8px;
+  color: #0f172a;
 }
 
 .best-destination-heading p {
-  max-width: 700px;
-  margin: auto;
-  line-height: 1.7;
-  opacity: 0.8;
+  color: #64748b;
+  font-size: 14.5px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.best-destination-status, .best-destination-error {
+  text-align: center;
+  padding: 30px;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+}
+
+.best-destination-error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
 }
 
 .recommendation-card {
-  padding: 35px;
-
-  border-radius: 28px;
-
-  background: rgba(20, 60, 45, 0.65);
-
-  border: 1px solid rgba(120, 255, 180, 0.25);
-
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  padding: 34px;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 35px rgba(15, 23, 42, 0.05);
 }
 
 .recommendation-route {
   display: grid;
-
-  grid-template-columns: 1fr 80px 1fr;
-
+  grid-template-columns: 1fr 60px 1fr;
   align-items: center;
-
-  gap: 25px;
+  gap: 20px;
+  margin-bottom: 25px;
 }
 
 .recommendation-place {
-  padding: 28px;
+  padding: 24px;
+  border-radius: 18px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+}
 
-  border-radius: 20px;
-
-  background: rgba(255, 255, 255, 0.08);
-
-  border: 1px solid rgba(255, 255, 255, 0.12);
+.recommendation-place.recommended {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
 }
 
 .recommendation-place span {
   display: block;
-
-  font-size: 11px;
-
-  letter-spacing: 1.6px;
-
+  font-size: 10.5px;
   font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #64748b;
+  margin-bottom: 6px;
+}
 
-  margin-bottom: 12px;
-
-  opacity: 0.8;
+.recommendation-place.recommended span {
+  color: #059669;
 }
 
 .recommendation-place h3 {
-  font-size: 27px;
-
-  margin: 0 0 18px;
+  font-family: 'Cinzel', serif;
+  font-size: 22px;
+  color: #0f172a;
+  margin-bottom: 8px;
 }
 
 .recommendation-place strong {
   display: block;
+  font-size: 34px;
+  color: #0f172a;
+}
 
-  font-size: 25px;
+.recommendation-place.recommended strong {
+  color: #059669;
 }
 
 .recommendation-place small {
-  opacity: 0.7;
-}
-
-.recommendation-place.recommended {
-  border-color: rgba(120, 255, 180, 0.5);
-}
-
-.recommendation-place.recommended span {
-  color: #83ffbd;
+  font-size: 11.5px;
+  color: #64748b;
 }
 
 .recommendation-arrow {
   text-align: center;
-
-  font-size: 45px;
-
-  color: #83ffbd;
-}
-
-.recommendation-score {
-  margin: 30px auto;
-
-  text-align: center;
-
-  padding: 22px;
-
-  border-radius: 18px;
-
-  background: rgba(120, 255, 180, 0.08);
-}
-
-.recommendation-score span {
-  display: block;
-
-  font-size: 11px;
-
-  letter-spacing: 1.5px;
-
+  font-size: 28px;
+  color: #059669;
   font-weight: 800;
 }
 
-.recommendation-score strong {
-  font-size: 48px;
-
-  color: #83ffbd;
+.recommendation-score {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 22px;
 }
 
-.recommendation-score small {
-  font-size: 15px;
+.recommendation-score span {
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #475569;
+}
 
-  opacity: 0.7;
+.recommendation-score strong {
+  font-size: 28px;
+  color: #059669;
 }
 
 .recommendation-reason {
   display: flex;
-
-  gap: 15px;
-
-  padding: 22px;
-
-  border-radius: 18px;
-
-  background: rgba(255, 255, 255, 0.07);
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px 22px;
+  border-radius: 16px;
+  background: #ecfdf5;
+  border-left: 4px solid #10b981;
 }
 
-.recommendation-reason > span {
-  font-size: 25px;
+.recommendation-reason span {
+  font-size: 22px;
+  line-height: 1;
 }
 
 .recommendation-reason strong {
   display: block;
-
-  margin-bottom: 8px;
+  font-size: 13.5px;
+  color: #059669;
+  margin-bottom: 4px;
 }
 
 .recommendation-reason p {
+  color: #334155;
+  font-size: 13.5px;
+  line-height: 1.6;
   margin: 0;
-
-  line-height: 1.7;
-
-  opacity: 0.85;
 }
 
-.best-destination-status,
-.best-destination-error {
-  text-align: center;
-
-  padding: 25px;
-}
-
-.best-destination-error {
-  color: #ff9a9a;
-}
-
-@media (max-width: 700px) {
-
+@media (max-width: 750px) {
   .recommendation-route {
     grid-template-columns: 1fr;
   }
-
   .recommendation-arrow {
     transform: rotate(90deg);
   }
-
-  .best-destination-heading h2 {
-    font-size: 32px;
-  }
-
 }

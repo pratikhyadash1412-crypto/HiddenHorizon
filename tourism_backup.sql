@@ -21,7 +21,7 @@ SET @@SESSION.SQL_LOG_BIN= 0;
 -- GTID state at the beginning of the backup 
 --
 
-SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '497a16ea-9a2b-11f1-96e6-7b76dcec0c76:1-34';
+SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '497a16ea-9a2b-11f1-96e6-7b76dcec0c76:1-146';
 
 --
 -- Table structure for table `ai_analysis`
@@ -48,9 +48,9 @@ CREATE TABLE `ai_analysis` (
   KEY `famous_destination_id` (`famous_destination_id`),
   KEY `hidden_destination_id` (`hidden_destination_id`),
   KEY `ix_ai_analysis_id` (`id`),
-  CONSTRAINT `ai_analysis_ibfk_1` FOREIGN KEY (`famous_destination_id`) REFERENCES `destinations` (`id`),
-  CONSTRAINT `ai_analysis_ibfk_2` FOREIGN KEY (`hidden_destination_id`) REFERENCES `destinations` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT `ai_analysis_ibfk_1` FOREIGN KEY (`famous_destination_id`) REFERENCES `destinations` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `ai_analysis_ibfk_2` FOREIGN KEY (`hidden_destination_id`) REFERENCES `destinations` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -59,7 +59,7 @@ CREATE TABLE `ai_analysis` (
 
 LOCK TABLES `ai_analysis` WRITE;
 /*!40000 ALTER TABLE `ai_analysis` DISABLE KEYS */;
-INSERT INTO `ai_analysis` VALUES (1,1,2,20,18,12,15,10,8,11,9,75,'Redistribute a portion of tourist traffic from the overcrowded destination to the hidden destination to reduce pressure and improve local economic opportunities.');
+INSERT INTO `ai_analysis` VALUES (1,1,2,20,18,12,15,10,8,11,9,75,'Redistribute a portion of tourist traffic from the overcrowded destination to the hidden destination to reduce pressure and improve local economic opportunities.'),(2,4,6,10,9,6,7.5,5,4,5.5,4.5,70,'Redirecting 10% of tourists from Puri Beach can reduce tourism pressure. Hidden waterfall Demo has good accessibility and is suitable for increased tourist distribution. The redistribution can create additional employment opportunities for the local community. Increased tourist activity may improve local purchases and community income. The redistribution has potential to increase government tourism-related revenue. The redistribution may provide environmental benefits through reduced pressure on the overcrowded destination.'),(4,4,6,10,9,6,7.5,5,4,5.5,4.5,70,'Redirecting 10% of tourists from Puri Beach can reduce tourism pressure. Hidden waterfall Demo has good accessibility and is suitable for increased tourist distribution. The redistribution can create additional employment opportunities for the local community. Increased tourist activity may improve local purchases and community income. The redistribution has potential to increase government tourism-related revenue. The redistribution may provide environmental benefits through reduced pressure on the overcrowded destination.'),(5,4,2,10,9,6,7.5,5,4,5.5,4.5,70,'Redirecting 10% of tourists from Puri Beach can reduce tourism pressure. Mahendragiri Hidden Zone has good accessibility and is suitable for increased tourist distribution. The redistribution can create additional employment opportunities for the local community. Increased tourist activity may improve local purchases and community income. The redistribution has potential to increase government tourism-related revenue. The redistribution may provide environmental benefits through reduced pressure on the overcrowded destination.'),(6,4,6,10,9,6,7.5,5,4,5.5,4.5,70,'RECOMMENDED: A 10% redistribution from Puri Beach to Hidden waterfall Demo is advisable. The redistribution can reduce tourism pressure at Puri Beach. Hidden waterfall Demo has strong accessibility (70/100) and can support increased tourist activity. The strategy can support local employment, businesses and community tourism income. It can also reduce environmental pressure through lower water consumption, waste generation and pollution at the overcrowded destination. Government action: implement the redistribution in phases and continuously monitor visitor pressure, infrastructure, water use, waste and pollution.');
 /*!40000 ALTER TABLE `ai_analysis` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -78,15 +78,17 @@ CREATE TABLE `destinations` (
   `description` text,
   `latitude` float DEFAULT NULL,
   `longitude` float DEFAULT NULL,
+  `image_url` varchar(500) DEFAULT NULL,
   `destination_type` varchar(30) NOT NULL,
-  `approved` tinyint(1) DEFAULT NULL,
-  `current_footfall` int DEFAULT NULL,
-  `water_usage` float DEFAULT NULL,
-  `waste_generation` float DEFAULT NULL,
-  `pollution_level` float DEFAULT NULL,
+  `approved` tinyint(1) DEFAULT '0',
+  `current_footfall` int DEFAULT '0',
+  `water_usage` float DEFAULT '0',
+  `waste_generation` float DEFAULT '0',
+  `pollution_level` float DEFAULT '0',
+  `video_url` varchar(500) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `ix_destinations_id` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=60 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -95,7 +97,7 @@ CREATE TABLE `destinations` (
 
 LOCK TABLES `destinations` WRITE;
 /*!40000 ALTER TABLE `destinations` DISABLE KEYS */;
-INSERT INTO `destinations` VALUES (1,'Deomali Hidden Trail','Odisha','Koraput','A scenic hidden destination surrounded by hills and forests.',18.6736,82.9511,'hidden',1,1200,4500,350,18),(2,'Mahendragiri Hidden Zone','Odisha','Gajapati','A lesser-known mountain tourism destination with natural landscapes.',18.9364,84.3437,'hidden',1,850,3200,220,12),(3,'Kandhamal Nature Valley','Odisha','Kandhamal','A nature destination suitable for eco-tourism and local employment.',20.47,84.23,'hidden',1,600,2500,180,10),(4,'Puri Beach','Odisha','Puri','One of Odisha\'s most popular tourist destinations.',19.8135,85.8312,'famous',1,150000,500000,45000,72),(5,'Konark Sun Temple','Odisha','Puri','A major historical and cultural tourist destination.',19.8876,86.0945,'famous',1,100000,300000,30000,60),(6,'Hidden waterfall Demo','Odisha','Keonjhar','A hidden waterfall suitable for eco tourism',21.6,85.58,'hidden',1,0,0,0,0);
+INSERT INTO `destinations` VALUES (1,'Deomali Trail','Odisha','Koraput','A scenic hidden destination surrounded by hills and forests.',18.6736,82.9511,'https://commons.wikimedia.org/wiki/Special:Redirect/file/Deomali_hill_top_Koraput_India.jpg','popular',1,1200,4500,350,18,NULL),(2,'Mahendragiri Zone','Odisha','Gajapati','A lesser-known mountain tourism destination with natural landscapes.',18.9364,84.3437,'https://www.sublimetourodisha.com/app-login/Upload/pkg_img/Mahendragiri%20Camping%20Odisha.jpg','popular',1,850,3200,220,12,NULL),(3,'Kandhamal Nature Valley','Odisha','Kandhamal','A nature destination suitable for eco-tourism and local employment.',20.47,84.23,'https://images.herzindagi.info/her-zindagi-english/images/2025/07/18/template/image/Daringbadi%2C-Odisha-1752860839955.jpg','popular',1,600,2500,180,10,NULL),(4,'Puri Beach','Odisha','Puri','One of Odisha\'s most popular tourist destinations.',19.8135,85.8312,'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2200&q=85','famous',1,150000,500000,45000,72,NULL),(5,'Konark Sun Temple','Odisha','Puri','A major historical and cultural tourist destination.',19.8876,86.0945,'/uploads/images/konark.jpg','famous',1,100000,300000,30000,60,NULL),(6,'Hidden waterfall','Odisha','Keonjhar','A hidden waterfall suitable for eco tourism',21.6,85.58,'https://static2.tripoto.com/media/filter/tst/img/2341218/SpotDocument/1762445786_1762445785742.jpg.webp','hidden',1,0,0,0,0,NULL),(57,'Balakati Syphon','Odisha','Khorda','nice place',20.2025,85.8646,'/uploads/images/d129aa20402e42079d442b1f0e7814af.jpeg','hidden',1,0,0,0,0,NULL),(58,'Dabarkhola waterfall','Odisha','Cuttack','very nice scenery',20.3,84.8,'/uploads/images/02d27c994ab745d68105f34c0acd6a58.jpeg','hidden',1,0,0,0,0,'/uploads/videos/cdd88a9d3d9043ad90ff9b9b6b5a4888.mp4'),(59,'Pandav Bakhra','Odisha','Cuttack','scenic place',20.435,85.634,'/uploads/images/b51d8e667432492a9349f6fb4e8c6fb5.jpeg','hidden',1,0,0,0,0,'/uploads/videos/c6db0fcc04a44ed486c53d07c5690757.mp4');
 /*!40000 ALTER TABLE `destinations` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -114,7 +116,7 @@ CREATE TABLE `footfall` (
   PRIMARY KEY (`id`),
   KEY `destination_id` (`destination_id`),
   KEY `ix_footfall_id` (`id`),
-  CONSTRAINT `footfall_ibfk_1` FOREIGN KEY (`destination_id`) REFERENCES `destinations` (`id`)
+  CONSTRAINT `footfall_ibfk_1` FOREIGN KEY (`destination_id`) REFERENCES `destinations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -141,15 +143,15 @@ CREATE TABLE `guide_bookings` (
   `user_id` int DEFAULT NULL,
   `destination_id` int DEFAULT NULL,
   `booking_date` varchar(30) DEFAULT NULL,
-  `status` varchar(30) DEFAULT NULL,
+  `status` varchar(30) DEFAULT 'PENDING',
   PRIMARY KEY (`id`),
   KEY `guide_id` (`guide_id`),
   KEY `user_id` (`user_id`),
   KEY `destination_id` (`destination_id`),
   KEY `ix_guide_bookings_id` (`id`),
-  CONSTRAINT `guide_bookings_ibfk_1` FOREIGN KEY (`guide_id`) REFERENCES `guides` (`id`),
-  CONSTRAINT `guide_bookings_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
-  CONSTRAINT `guide_bookings_ibfk_3` FOREIGN KEY (`destination_id`) REFERENCES `destinations` (`id`)
+  CONSTRAINT `guide_bookings_ibfk_1` FOREIGN KEY (`guide_id`) REFERENCES `guides` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `guide_bookings_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `guide_bookings_ibfk_3` FOREIGN KEY (`destination_id`) REFERENCES `destinations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -174,11 +176,11 @@ CREATE TABLE `guides` (
   `user_id` int DEFAULT NULL,
   `experience` varchar(100) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
-  `verification_status` varchar(30) DEFAULT NULL,
+  `verification_status` varchar(30) DEFAULT 'PENDING',
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   KEY `ix_guides_id` (`id`),
-  CONSTRAINT `guides_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+  CONSTRAINT `guides_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=53 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -208,12 +210,14 @@ CREATE TABLE `place_submissions` (
   `description` text,
   `latitude` float DEFAULT NULL,
   `longitude` float DEFAULT NULL,
-  `verification_status` varchar(30) DEFAULT NULL,
+  `image_url` varchar(500) DEFAULT NULL,
+  `verification_status` varchar(30) DEFAULT 'PENDING',
+  `video_url` varchar(500) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   KEY `ix_place_submissions_id` (`id`),
-  CONSTRAINT `place_submissions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT `place_submissions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=60 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -222,7 +226,7 @@ CREATE TABLE `place_submissions` (
 
 LOCK TABLES `place_submissions` WRITE;
 /*!40000 ALTER TABLE `place_submissions` DISABLE KEYS */;
-INSERT INTO `place_submissions` VALUES (1,1,'Hidden waterfall Demo','Odisha','Keonjhar','A hidden waterfall suitable for eco tourism',21.6,85.58,'APPROVED');
+INSERT INTO `place_submissions` VALUES (1,1,'Hidden waterfall Demo','Odisha','Keonjhar','A hidden waterfall suitable for eco tourism',21.6,85.58,'https://static2.tripoto.com/media/filter/tst/img/2341218/SpotDocument/1762445786_1762445785742.jpg.webp','APPROVED',NULL),(52,1,'Barunei Hills','Odisha','Khorda','A beautiful perennial stream flowing down the hills. It fills a natural stone pool where devotees take holy dips and families gather for picnics.',20.1652,85.6598,'https://www.google.com/url?sa=t&source=web&rct=j&url=https%3A%2F%2Flocaldrive.in%2Fbarunei-hill-a-sacred-blend-of-history-spirituality-and-patriotism-in-khurda%2F&ved=0CBYQjRxqFwoTCLDJqr3csZYDFQAAAAAdAAAAABA4&opi=89978449','APPROVED',NULL),(53,1,'Balakati Syphon','Odisha','Khorda','nice place',20.2051,85.8718,'https://www.google.com/url?sa=t&source=web&rct=j&url=https%3A%2F%2Fwww.youtube.com%2Fshorts%2FyajDNn9NlEg&ved=0CBYQjRxqFwoTCLC-r_65y5YDFQAAAAAdAAAAABBu&opi=89978449','APPROVED',NULL),(54,1,'Balakati Syphon','Odisha','Khorda','nice place',20.2051,85.8718,'https://www.google.com/url?sa=t&source=web&rct=j&url=https%3A%2F%2Fwww.instagram.com%2Fpopular%2Fsyphon-balakati-location%2F&ved=0CBYQjRxqFwoTCODIxdK7y5YDFQAAAAAdAAAAABA4&opi=89978449','APPROVED',NULL),(55,1,'Balakati Syphon','Odisha','Khorda','nice place',20.2026,20.2026,'/uploads/images/07cd943d804d4041b9798f29e84dd5f6.jpeg','APPROVED',NULL),(56,1,'Balakati Syphon','Odisha','Khorda','nice place',20.2026,85.8646,'/uploads/images/f0d019ba875d442598acd16cc969feb3.jpeg','APPROVED',NULL),(57,1,'Balakati Syphon','Odisha','Khorda','nice place',20.2025,85.8646,'/uploads/images/d129aa20402e42079d442b1f0e7814af.jpeg','APPROVED',NULL),(58,1,'Dabarkhola waterfall','Odisha','Cuttack','very nice scenery',20.3,84.8,'/uploads/images/02d27c994ab745d68105f34c0acd6a58.jpeg','APPROVED','/uploads/videos/cdd88a9d3d9043ad90ff9b9b6b5a4888.mp4'),(59,1,'Pandav Bakhra','Odisha','Cuttack','scenic place',20.435,85.634,'/uploads/images/b51d8e667432492a9349f6fb4e8c6fb5.jpeg','APPROVED','/uploads/videos/c6db0fcc04a44ed486c53d07c5690757.mp4');
 /*!40000 ALTER TABLE `place_submissions` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -243,9 +247,9 @@ CREATE TABLE `reviews` (
   KEY `destination_id` (`destination_id`),
   KEY `user_id` (`user_id`),
   KEY `ix_reviews_id` (`id`),
-  CONSTRAINT `reviews_ibfk_1` FOREIGN KEY (`destination_id`) REFERENCES `destinations` (`id`),
-  CONSTRAINT `reviews_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=53 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT `reviews_ibfk_1` FOREIGN KEY (`destination_id`) REFERENCES `destinations` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `reviews_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=54 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -254,7 +258,7 @@ CREATE TABLE `reviews` (
 
 LOCK TABLES `reviews` WRITE;
 /*!40000 ALTER TABLE `reviews` DISABLE KEYS */;
-INSERT INTO `reviews` VALUES (1,1,1,5,'Beautiful place and peaceful environment.'),(2,1,1,4,'Very scenic but transport can be improved.'),(3,2,1,5,'Amazing natural landscape.'),(4,3,1,4,'Good place for nature tourism.'),(52,1,1,5,'Amazing Scenery');
+INSERT INTO `reviews` VALUES (1,1,1,5,'Beautiful place and peaceful environment.'),(2,1,1,4,'Very scenic but transport can be improved.'),(3,2,1,5,'Amazing natural landscape.'),(4,3,1,4,'Good place for nature tourism.'),(52,1,1,5,'Amazing Scenery'),(53,6,1,5,'very good place');
 /*!40000 ALTER TABLE `reviews` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -275,7 +279,7 @@ CREATE TABLE `stays` (
   PRIMARY KEY (`id`),
   KEY `destination_id` (`destination_id`),
   KEY `ix_stays_id` (`id`),
-  CONSTRAINT `stays_ibfk_1` FOREIGN KEY (`destination_id`) REFERENCES `destinations` (`id`)
+  CONSTRAINT `stays_ibfk_1` FOREIGN KEY (`destination_id`) REFERENCES `destinations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -305,7 +309,7 @@ CREATE TABLE `users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
   KEY `ix_users_id` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=55 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -328,4 +332,4 @@ SET @@SESSION.SQL_LOG_BIN = @MYSQLDUMP_TEMP_LOG_BIN;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-08-19 18:12:25
+-- Dump completed on 2026-09-01 11:55:16
