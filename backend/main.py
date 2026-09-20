@@ -25,7 +25,7 @@ VIDEO_UPLOAD_DIR = os.path.join(BASE_UPLOAD_DIR, "videos")
 os.makedirs(IMAGE_UPLOAD_DIR, exist_ok=True)
 os.makedirs(VIDEO_UPLOAD_DIR, exist_ok=True)
 
-app = FastAPI(title="Tourism API")
+app = FastAPI(title="HiddenHorizon API")
 
 # Mount the entire uploads directory so /uploads/images/... and /uploads/videos/... resolve correctly
 app.mount(
