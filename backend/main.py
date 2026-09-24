@@ -94,6 +94,65 @@ def home():
     return {"message": "S21 Tourism Backend is Running"}
 
 
+
+@app.post("/signup")
+def signup(
+    name: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    name = name.strip()
+    email = email.strip().lower()
+
+    if not name:
+        raise HTTPException(
+            status_code=400,
+            detail="Name is required."
+        )
+
+    if not email:
+        raise HTTPException(
+            status_code=400,
+            detail="Email is required."
+        )
+
+    if len(password) < 6:
+        raise HTTPException(
+            status_code=400,
+            detail="Password must be at least 6 characters."
+        )
+
+    existing_user = (
+        db.query(models.User)
+        .filter(models.User.email == email)
+        .first()
+    )
+
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="An account with this email already exists."
+        )
+
+    new_user = models.User(
+        name=name,
+        email=email,
+        password=password,
+        role="PUBLIC"
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {
+        "message": "Account created successfully.",
+        "user_id": new_user.id,
+        "name": new_user.name,
+        "email": new_user.email,
+        "role": new_user.role
+    }
 # =========================
 # LOGIN
 # =========================

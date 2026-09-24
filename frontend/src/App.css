@@ -1486,3 +1486,44 @@ a {
   .fun-logo-copy span{font-size:16px}
   .fun-nav-cta{padding:8px 13px}
 }
+/* =====================================================
+   PUBLIC SIGNUP
+===================================================== */
+
+.signup-switch-text {
+  margin-top: 18px;
+  text-align: center;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.signup-switch-link {
+  color: #15966d;
+  font-weight: 800;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.signup-switch-link:hover {
+  color: #0f766e;
+  text-decoration: underline;
+}
+
+.login-success-alert {
+  padding: 12px 16px;
+  margin-top: 4px;
+  margin-bottom: 12px;
+
+  border-radius: 12px;
+
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+
+  color: #047857;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  text-align: center;
+}

@@ -374,8 +374,244 @@ function PublicLogin() {
             {loading ? "Packing your bags..." : "Start Exploring →"}
           </button>
         </form>
+        <p className="signup-switch-text">
+  New to Hidden Horizon?{" "}
+  <Link
+    to="/public-signup"
+    className="signup-switch-link"
+  >
+    Create an account
+  </Link>
+</p>
 
         <Link to="/" className="back-link fun-back-link">← Return to Home</Link>
+      </div>
+    </div>
+  );
+}
+
+
+// =====================================================
+// PUBLIC SIGNUP COMPONENT
+// =====================================================
+
+function PublicSignup() {
+  const navigate = useNavigate();
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSignup = async (e) => {
+    e.preventDefault();
+
+    setError("");
+    setSuccess("");
+
+    if (!name.trim()) {
+      setError("Please enter your name.");
+      return;
+    }
+
+    if (!email.trim()) {
+      setError("Please enter your email.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/signup`, {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/x-www-form-urlencoded",
+        },
+
+        body: new URLSearchParams({
+          name: name.trim(),
+          email: email.trim(),
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.detail || "Unable to create account."
+        );
+      }
+
+      setSuccess(
+        "Account created successfully! Redirecting to login..."
+      );
+
+      setTimeout(() => {
+        navigate("/public-login");
+      }, 1200);
+
+    } catch (err) {
+      setError(
+        err.message ||
+        "Unable to connect to authentication server."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div
+      className="login-page fun-login-page"
+      style={{
+        backgroundImage:
+          `url("${WATERFALL_HERO_BG}")`,
+      }}
+    >
+
+      <div className="login-overlay fun-login-overlay"></div>
+
+      <div className="login-box fun-login-box animate-scale-up">
+
+        <div className="login-badge-pill">
+          <span>✨ EXPLORER ACCESS</span>
+        </div>
+
+        <div className="login-header-icon fun-icon-glow">
+          <Users size={30} />
+        </div>
+
+        <h1 className="login-heading fun-login-title">
+          Join Hidden Horizon 🌿
+        </h1>
+
+        <p className="login-subtext fun-login-sub">
+          Create your explorer account and discover
+          verified hidden destinations across India.
+        </p>
+
+        <form
+          onSubmit={handleSignup}
+          className="login-form fun-login-form"
+        >
+
+          <div className="input-group fun-input-group">
+            <label>Your Name</label>
+
+            <input
+              type="text"
+              placeholder="e.g. Pratikhya Dash"
+              required
+              value={name}
+              onChange={(e) =>
+                setName(e.target.value)
+              }
+            />
+          </div>
+
+          <div className="input-group fun-input-group">
+            <label>Email</label>
+
+            <input
+              type="email"
+              placeholder="e.g. explorer@travel.in"
+              required
+              value={email}
+              onChange={(e) =>
+                setEmail(e.target.value)
+              }
+            />
+          </div>
+
+          <div className="input-group fun-input-group">
+            <label>Password</label>
+
+            <input
+              type="password"
+              placeholder="At least 6 characters"
+              required
+              value={password}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
+            />
+          </div>
+
+          <div className="input-group fun-input-group">
+            <label>Confirm Password</label>
+
+            <input
+              type="password"
+              placeholder="Re-enter your password"
+              required
+              value={confirmPassword}
+              onChange={(e) =>
+                setConfirmPassword(e.target.value)
+              }
+            />
+          </div>
+
+          {error && (
+            <div className="login-error-alert fun-error-alert">
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div
+              className="login-success-alert"
+            >
+              ✓ {success}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="login-submit-btn fun-submit-cta"
+          >
+            {loading
+              ? "Creating your account..."
+              : "Create Explorer Account →"}
+          </button>
+
+        </form>
+        
+
+        <p className="signup-switch-text">
+          Already have an account?{" "}
+          <Link
+            to="/public-login"
+            className="signup-switch-link"
+          >
+            Login
+          </Link>
+        </p>
+
+        <Link
+          to="/"
+          className="back-link fun-back-link"
+        >
+          ← Return to Home
+        </Link>
+
       </div>
     </div>
   );
@@ -1053,6 +1289,10 @@ export default function App() {
         <Route path="/public" element={<PublicDashboard />} />
         <Route path="/destination/:destination_id" element={<DestinationDetails />} />
         <Route path="/government" element={<GovernmentDashboard />} />
+        <Route
+  path="/public-signup"
+  element={<PublicSignup />}
+/>
       </Routes>
     </BrowserRouter>
   );
