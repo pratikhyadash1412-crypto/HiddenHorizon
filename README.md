@@ -29,6 +29,15 @@ The platform provides separate public and government-oriented functionality, inc
 - Destination details
 - Tourism-related destination data
 
+###Interactive Destination Map
+
+-Displays destinations using their geographical coordinates
+-Interactive map embedded directly into destination details
+-Shows latitude and longitude
+-Provides direct Get Directions functionality
+-Helps travellers understand the location and accessibility of destinations
+
+
 ### Government Features
 
 - Government dashboard
@@ -193,3 +202,6 @@ RescueLens/
 │   └── ...
 │
 └── README.md
+
+###License
+This project was developed as an academic/hackathon project.
