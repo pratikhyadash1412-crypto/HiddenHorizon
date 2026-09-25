@@ -4,7 +4,7 @@
 
 Hidden Horizon is a tourism management platform designed to help identify tourism pressure, analyze destination sustainability, and support the redistribution of tourists from overcrowded destinations toward suitable lower-pressure destinations.
 
-The platform provides separate public and government-oriented functionality, including destination discovery, destination and guide verification, tourism pressure analysis, redistribution simulation, AI-generated recommendations, and government decision support.
+The platform provides separate public and government-oriented functionality, including destination discovery, destination verification, tourism pressure analysis, redistribution simulation, AI-generated recommendations, and government decision support.
 
 ---
 
